@@ -1,0 +1,23 @@
+.container {
+    border-radius: 10px 10px 10px 10px;
+    background: #c7c7c7;
+    width: 120px;
+    color: black;
+}
+
+.image {
+    display: flex;
+    justify-content: center;
+    background: #ffffff;
+    margin: 0px 0px 0px 0px;
+    border-radius: 10px 10px 0px 0px;
+    padding: 15px;
+}
+
+.image > img {
+    height: 100px;
+}
+
+.title {
+    min-height: 75px;
+}
