@@ -9,6 +9,7 @@ function App() {
   const [deck] = useState(basedeck);
   const [power, setPower] = useState(0);
   const [command, setCommand] = useState(0);
+  const [support, setSupport] = useState(0);
 
   // console.log(power)
 
@@ -24,6 +25,7 @@ function App() {
   useEffect(() => {
     setPower(deck.reduce((acc, card) => acc + parseInt(card.power), 0));
     setCommand(deck.reduce((acc, card) => acc + parseInt(card.command), 0));
+    setSupport(deck.reduce((acc, card) => acc + parseInt(card.support), 0));
   }, [deck])
 
   return (
@@ -34,6 +36,7 @@ function App() {
       {/* <img src={icon} alt="icon" /> */}
       Power: {power}
       Command: {command}
+      Support: {support}
       <Hand>
         {deck.map((card, idx) => <Card key={idx} card={card} />)}
       </Hand>

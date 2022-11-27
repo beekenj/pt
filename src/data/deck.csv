@@ -1,11 +1,11 @@
-icon,name,type,power,command
-g35934.png,Reactor,system,6,0
-g13879.png,Shield Generator,system,-2,0
-g3191.png,Hanger,system,-1,0
-g370.png,Hull,system,0,0
-g15616.png,Scout,ship,0,0
-g15616.png,Scout,ship,0,0
-g7112.png,Interceptor,ship,0,0
-g7112.png,Interceptor,ship,0,0
-g8439.png,Tibor,officer,0,3
-g8439.png,Annabelle,officer,0,-1
+icon,name,type,power,command,support,health
+g35934.png,Reactor,system,6,0,0,0
+g13879.png,Shield Generator,system,-2,0,0,0
+g3191.png,Hanger,system,-1,0,2,0
+g370.png,Hull,system,0,0,0,4
+g15616.png,Scout,ship,0,0,0,0
+g15616.png,Scout,ship,0,0,0,0
+g7112.png,Interceptor,ship,0,0,0,0
+g7112.png,Interceptor,ship,0,0,0,0
+g8439.png,Tibor,officer,0,3,0,0
+g8439.png,Annabelle,officer,0,-1,0,0
