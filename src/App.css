@@ -1,5 +1,9 @@
 .App {
   text-align: center;
+  color: white;
+  /* display: grid;
+  grid-template: auto auto / repeat(3, 1fr);
+  gap: 20px; */
 }
 
 .App-logo {

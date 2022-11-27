@@ -1,23 +1,44 @@
-import logo from './logo.svg';
+import { useState, useEffect } from 'react';
 import './App.css';
+import basedeck from './data/data';
+import Card from './components/Card';
+import Hand from './components/Hand';
+// import * as fs from 'fs';
 
 function App() {
+  const [deck] = useState(basedeck);
+  const [power, setPower] = useState(0);
+  const [command, setCommand] = useState(0);
+
+  // console.log(power)
+
+  // const fs = require('fs');
+  // const { parse } = require("csv-parse");
+
+  // const card1 = {
+  //   icon: 'g7112.png',
+  //   name: 'Interceptor',
+  // }
+
+  // deck.map
+  useEffect(() => {
+    setPower(deck.reduce((acc, card) => acc + parseInt(card.power), 0));
+    setCommand(deck.reduce((acc, card) => acc + parseInt(card.command), 0));
+  }, [deck])
+
   return (
     <div className="App">
-      <header className="App-header">
+      {/* <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      </header> */}
+      {/* <img src={icon} alt="icon" /> */}
+      <div>
+        Power: {power}
+        Command: {command}
+      </div>
+      <Hand>
+        {deck.map((card, idx) => <Card key={idx} card={card} />)}
+      </Hand>
     </div>
   );
 }
