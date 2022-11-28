@@ -3,6 +3,7 @@ import './App.css';
 import basedeck from './data/data';
 import Card from './components/Card';
 import Hand from './components/Hand';
+import Nav from './components/Nav';
 // import * as fs from 'fs';
 
 function App() {
@@ -34,9 +35,12 @@ function App() {
         <img src={logo} className="App-logo" alt="logo" />
       </header> */}
       {/* <img src={icon} alt="icon" /> */}
-      Power: {power}
-      Command: {command}
-      Support: {support}
+      
+      <Nav 
+        power={power}
+        command={command}
+        support={support}
+      />
       <Hand>
         {deck.map((card, idx) => <Card key={idx} card={card} />)}
       </Hand>
