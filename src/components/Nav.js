@@ -12,6 +12,9 @@ export default function Nav(props) {
             <div>
                 Support: {props.support}
             </div>
+            <div>
+                Health: {props.health}
+            </div>
         </nav>
     );
 }
