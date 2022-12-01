@@ -14,8 +14,12 @@ export default function Card(props) {
         });
     }, []);
 
+    const style = {
+        // background:'red',
+    }
+
     return (
-        <div className='container'>
+        <div className='container' style={style}>
             {/* <h1>hi</h1> */}
             <div className='image'>
                 <img src={require(`../img/${icon}`)} alt="icon"/>
@@ -23,15 +27,7 @@ export default function Card(props) {
             <div className='title'>
                 <h3>{name}</h3>
             </div>
-            {/* <Tippy
-                render={attrs => (
-                <div className="box" tabIndex="-1" {...attrs}>
-                    My tippy box
-                </div>
-                )}
-            >
-            </Tippy> */}
-                <div id='myButton'>Info</div>
+            <div id='myButton'>Info</div>
         </div>
     )
 }

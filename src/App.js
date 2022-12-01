@@ -7,12 +7,6 @@ import Nav from './components/Nav';
 // import * as fs from 'fs';
 
 function App() {
-  const [deck, setDeck] = useState(basedeck);
-  const [power, setPower] = useState(0);
-  const [command, setCommand] = useState(0);
-  const [support, setSupport] = useState(0);
-  const [health, setHealth] = useState(0);
-
   const shuffleDeck = (arr) => {
     // starting from the end of the array, let j be random index between 
     // 0 and i. Switch the elements at indeces i and j; iterete.
@@ -23,15 +17,25 @@ function App() {
     return arr;
   };
 
-  useEffect(() => {
-    setDeck(prevDeck => shuffleDeck(prevDeck));
-  }, []);
+  const [deck] = useState(basedeck);
+  const [draw] = useState(shuffleDeck(deck));
+  // const [hand, setHand] = useState([]);
+  const [shipStats, setShipStats] = useState({});
+
+  // useEffect(() => {
+  //   setHand(draw.slice(5));
+  //   setDraw(prevDraw => prevDraw.slice(-5))
+  // }, []);
+
+  // console.log(draw.slice(-5))
 
   useEffect(() => {
-    setPower(deck.reduce((acc, card) => acc + parseInt(card.power), 0));
-    setCommand(deck.reduce((acc, card) => acc + parseInt(card.command), 0));
-    setSupport(deck.reduce((acc, card) => acc + parseInt(card.support), 0));
-    setHealth(deck.reduce((acc, card) => acc + parseInt(card.health), 0));
+    setShipStats({
+      power: deck.reduce((acc, card) => acc + parseInt(card.power), 0),
+      command: deck.reduce((acc, card) => acc + parseInt(card.command), 0),
+      support: deck.reduce((acc, card) => acc + parseInt(card.support), 0),
+      health: deck.reduce((acc, card) => acc + parseInt(card.health), 0),
+    });
   }, [deck])
 
   return (
@@ -42,13 +46,13 @@ function App() {
       {/* <img src={icon} alt="icon" /> */}
       
       <Nav 
-        power={power}
-        command={command}
-        support={support}
-        health={health}
+        power={shipStats.power}
+        command={shipStats.command}
+        support={shipStats.support}
+        health={shipStats.health}
       />
       <Hand>
-        {deck.map((card, idx) => <Card key={idx} card={card} />)}
+        {draw.map((card, idx) => <Card key={idx} card={card} />)}
       </Hand>
     </div>
   );
