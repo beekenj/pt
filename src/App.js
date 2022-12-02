@@ -4,9 +4,10 @@ import basedeck from './data/data';
 import Card from './components/Card';
 import Hand from './components/Hand';
 import Nav from './components/Nav';
-// import * as fs from 'fs';
 
 function App() {
+  const HANDSIZE = 4;
+
   const shuffleDeck = (arr) => {
     // starting from the end of the array, let j be random index between 
     // 0 and i. Switch the elements at indeces i and j; iterete.
@@ -17,17 +18,21 @@ function App() {
     return arr;
   };
 
+  const drawCards = () => {
+    // console.log("clicked");
+    setHand(draw.slice(0, HANDSIZE));
+    setDraw(prevDraw => prevDraw.slice(HANDSIZE-prevDraw.length)); 
+    if (hand.length > 0) {      
+      setDiscard(prevDiscard => [...hand, ...prevDiscard]);
+    }    
+  }
+  
   const [deck] = useState(basedeck);
-  const [draw] = useState(shuffleDeck(deck));
-  // const [hand, setHand] = useState([]);
+  const [draw, setDraw] = useState(shuffleDeck(deck));
+  // const [draw, setDraw] = useState(deck);
+  const [hand, setHand] = useState([]);
+  const [discard, setDiscard] = useState([]);
   const [shipStats, setShipStats] = useState({});
-
-  // useEffect(() => {
-  //   setHand(draw.slice(5));
-  //   setDraw(prevDraw => prevDraw.slice(-5))
-  // }, []);
-
-  // console.log(draw.slice(-5))
 
   useEffect(() => {
     setShipStats({
@@ -36,24 +41,33 @@ function App() {
       support: deck.reduce((acc, card) => acc + parseInt(card.support), 0),
       health: deck.reduce((acc, card) => acc + parseInt(card.health), 0),
     });
-  }, [deck])
+  }, [deck]);
+
+  useEffect(() => {
+    if (draw.length < HANDSIZE) {
+      setDraw(prevDraw => [...prevDraw, ...shuffleDeck(discard)]);
+      setDiscard([]);
+    }
+  }, [draw, discard]);
 
   return (
-    <div className="App">
-      {/* <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-      </header> */}
-      {/* <img src={icon} alt="icon" /> */}
-      
+    <div className="App">      
       <Nav 
         power={shipStats.power}
         command={shipStats.command}
         support={shipStats.support}
         health={shipStats.health}
       />
+      {/* <Hand>
+        {draw.length > 0 && draw.map((card, idx) => <Card key={idx} card={card} />)}
+      </Hand> */}
       <Hand>
-        {draw.map((card, idx) => <Card key={idx} card={card} />)}
+        {hand.length > 0 && hand.map((card, idx) => <Card key={idx} card={card} />)}
       </Hand>
+      {/* <Hand>
+        {discard.length > 0 && discard.map((card, idx) => <Card key={idx} card={card} />)}
+      </Hand> */}
+      <button onClick={drawCards}>Draw</button>
     </div>
   );
 }
