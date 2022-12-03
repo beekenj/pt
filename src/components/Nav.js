@@ -4,13 +4,13 @@ export default function Nav(props) {
     return (
         <nav>
             <div>
-                Power: {props.power}
+                Power: {props.curPower}/{props.power}
             </div>
             <div>
-                Command: {props.command}
+                Command: {props.curCommand}/{props.command}
             </div>
             <div>
-                Support: {props.support}
+                Support: {props.curSupport}/{props.support}
             </div>
             <div>
                 Health: {props.health}

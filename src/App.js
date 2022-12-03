@@ -33,6 +33,9 @@ function App() {
   const [hand, setHand] = useState([]);
   const [discard, setDiscard] = useState([]);
   const [shipStats, setShipStats] = useState({});
+  const [curPower] = useState(0);
+  const [curCommand] = useState(0);
+  const [curSupport] = useState(0);
 
   useEffect(() => {
     setShipStats({
@@ -56,6 +59,9 @@ function App() {
         power={shipStats.power}
         command={shipStats.command}
         support={shipStats.support}
+        curPower={curPower}
+        curCommand={curCommand}
+        curSupport={curSupport}
         health={shipStats.health}
       />
       {/* <Hand>
