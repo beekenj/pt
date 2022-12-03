@@ -4,6 +4,7 @@ import basedeck from './data/data';
 import Card from './components/Card';
 import Hand from './components/Hand';
 import Nav from './components/Nav';
+import Systems from './components/Systems';
 
 function App() {
   const HANDSIZE = 4;
@@ -19,12 +20,15 @@ function App() {
   };
 
   const drawCards = () => {
-    // console.log("clicked");
     setHand(draw.slice(0, HANDSIZE));
-    setDraw(prevDraw => prevDraw.slice(HANDSIZE-prevDraw.length)); 
+    setDraw(prevDraw => {
+      console.log(prevDraw, hand);
+      return prevDraw.slice(HANDSIZE-prevDraw.length)
+    }); 
     if (hand.length > 0) {      
       setDiscard(prevDiscard => [...hand, ...prevDiscard]);
     }    
+    // console.log("clicked");
   }
   
   const [deck] = useState(basedeck);
@@ -48,7 +52,10 @@ function App() {
 
   useEffect(() => {
     if (draw.length < HANDSIZE) {
-      setDraw(prevDraw => [...prevDraw, ...shuffleDeck(discard)]);
+      setDraw(prevDraw => {
+        console.log(prevDraw, hand, discard);
+        return [...prevDraw, ...shuffleDeck(discard)]
+      });
       setDiscard([]);
     }
   }, [draw, discard]);
@@ -74,6 +81,7 @@ function App() {
         {discard.length > 0 && discard.map((card, idx) => <Card key={idx} card={card} />)}
       </Hand> */}
       <button onClick={drawCards}>Draw</button>
+      <Systems />
     </div>
   );
 }
