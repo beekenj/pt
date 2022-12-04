@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react';
 import './App.css';
+import Tippy from '@tippyjs/react';
+import 'tippy.js/dist/tippy.css';
 import basedeck from './data/data';
 import Card from './components/Card';
 import Hand from './components/Hand';
 import Nav from './components/Nav';
 import Systems from './components/Systems';
+import PlayButton from './components/PlayButton';
+// import tippy from 'tippy.js';
 
 function App() {
   const HANDSIZE = 4;
@@ -21,6 +25,7 @@ function App() {
   };
 
   const drawCards = () => {
+    setFirstDraw(false);
     setHand(draw.slice(0, HANDSIZE));
     setDraw(prevDraw => {
       // console.log(prevDraw, hand);
@@ -33,9 +38,9 @@ function App() {
       setDiscard(prevDiscard => [...hand, ...prevDiscard]);
     }    
     // console.log("clicked");
-  }
+  };
 
-  const handleClick = (id) => {
+  const cardClick = (id) => {
     setHand(prevHand => prevHand.map(card => {
       return card.id === id && card.type !== 'system' ?
         {...card, selected:!card.selected} :
@@ -43,6 +48,10 @@ function App() {
       }
     ));
     // setHandSelect(prevSelect => [...prevSelect, prevSelect[idx]=!prevSelect[idx]]);
+  };
+
+  const clickPlay = () => {
+    if (legal) drawCards();
   }
   
   const [deck] = useState(basedeck.map(card => {
@@ -60,6 +69,9 @@ function App() {
   const [curPower] = useState(0);
   const [curCommand, setCurCommand] = useState(0);
   const [curSupport, setCurSupport] = useState(0);
+  const [legal, setLegal] = useState(true);
+  const [firstDraw, setFirstDraw] = useState(true);
+  const [playTooltip, setPlayTootip] = useState("");
 
   useEffect(() => {
     setDraw(shuffleDeck(deck));
@@ -90,6 +102,26 @@ function App() {
       parseInt(card.actCom) + acc : 0 + acc, 0));
   }, [hand, shipStats]);
 
+  useEffect(() => {
+    // let content = "Play Cards!";
+    if (firstDraw) {
+      setPlayTootip("Draw Cards!");
+    } else if (curPower < 0) {
+      setPlayTootip("Insufficient Power!");
+    } else if (curCommand < 0) {
+      setPlayTootip("Insufficient Command!");      
+    } else if (curSupport < 0) {
+      setPlayTootip("Insufficient Support!");      
+    } else {
+      setPlayTootip("Play Cards!");      
+    }
+    setLegal(
+      curPower >= 0 && 
+      curCommand >= 0 &&
+      curSupport >= 0
+    );
+  }, [curCommand, curPower, curSupport, firstDraw]);
+
   return (
     <div className="App">      
       <Nav 
@@ -101,24 +133,42 @@ function App() {
         curSupport={curSupport}
         health={shipStats.health}
       />
-      {/* <Hand>
-        {draw.length > 0 && draw.map((card, idx) => <Card key={idx} card={card} />)}
-      </Hand> */}
-      <Hand>
-        {hand.length > 0 && hand.map((card, idx) => 
-          <Card 
-            key={idx} 
-            card={card} 
-            selected={card.selected}
-            handleClick={() => handleClick(card.id)}
-          />
-        )}
-      </Hand>
-      {/* <Hand>
-        {discard.length > 0 && discard.map((card, idx) => <Card key={idx} card={card} />)}
-      </Hand> */}
-      <button onClick={drawCards}>Draw</button>
-      <Systems />
+      <div style={{marginTop:"80px"}}>
+        <h1>The action goes here!</h1>
+      </div>
+      <div style={{
+        position:"fixed", 
+        // margin: "20px",
+        width:"100%",
+        bottom:"0", 
+        right:"0",
+        left:"0",
+      }}>      
+        <Hand>
+          {hand.length > 0 && hand.map((card, idx) => 
+            <Card 
+              key={idx} 
+              card={card} 
+              selected={card.selected}
+              handleClick={() => cardClick(card.id)}
+            />
+          )}
+        </Hand>
+        <div style={{
+          display:"flex",
+          justifyContent:"space-between",
+          alignItems:"flex-end",
+          margin:"20px",
+        }}>
+          <Systems />
+          <PlayButton
+            playTooltip={playTooltip}
+            clickPlay={clickPlay}
+            legal={legal}
+            firstDraw={firstDraw}
+          />        
+        </div>
+      </div>
     </div>
   );
 }

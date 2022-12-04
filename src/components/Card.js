@@ -3,13 +3,18 @@ import '../css/card.css';
 // import Tippy from '@tippyjs/react/headless';
 import tippy from 'tippy.js';
 import 'tippy.js/dist/tippy.css';
+import CardTooltip from './CardTooltip';
 
 export default function Card(props) {
     const {icon, name, type} = props.card;
 
     useEffect(() => {
-        tippy('#myButton', {
-            content: 'My tooltip!',
+        tippy('#targeting', {
+            content: "Targeting",
+            placement: 'top',
+        });
+        tippy('#evasion', {
+            content: "Evasion",
             placement: 'top',
         });
     }, []);
@@ -17,7 +22,7 @@ export default function Card(props) {
     const cardStyle = {
         background: type === 'system' ? "#272727" : "#c7c7c7",
         color: type === 'system' ? "white" : "black",
-        border: props.selected ? "thick solid #0000FF" : "thick solid rgba(0, 0, 0, .5)",
+        border: props.selected ? "thick solid #4c66af" : "thick solid rgba(0, 0, 0, .5)",
         cursor: type === 'system' ? "not-allowed" : "pointer",
     }
 
@@ -30,7 +35,10 @@ export default function Card(props) {
             <div className='title'>
                 <h3>{name}</h3>
             </div>
-            <div id='myButton' className='info'>Info</div>
+            {type === 'ship' && <div className='info'>
+                <div id='targeting' className='stats'>{props.card.targeting}</div>
+                <div id='evasion' className='stats'>{props.card.evasion}</div>
+            </div>}
         </div>
     )
 }

@@ -1,7 +1,14 @@
 .systems {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
+    gap: 10px;
     align-items: center;
-    height: 50px;
+    /* height: 70px; */
+    margin-top: 20px;
+    /* background-color: black; */
     /* width: 800px; */
+}
+
+img {
+    width: 60px;
 }

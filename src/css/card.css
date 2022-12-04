@@ -7,6 +7,7 @@
     -webkit-user-select: none; /* Safari */
     -ms-user-select: none; /* IE 10 and IE 11 */
     user-select: none; /* Standard syntax */
+    height: 245px;
 }
 
 .image {
@@ -20,12 +21,27 @@
 
 .image > img {
     height: 100px;
+    width: 120px;
 }
 
 .title {
-    min-height: 75px;
+    min-height: 55px;
+    /* min-height: 75px; */
 }
 
 .info {
+    display: flex;
+    justify-content: space-between;
+    margin: 10px;
+}
+
+.stats {
     cursor: help;
+    width: 20px;
+    height: 20px;
+    /* border: 1px solid; */
+    border-radius: 10px;
+    border-color: #000000;
+    display: inline;
+    vertical-align: middle;
 }
