@@ -1,8 +1,12 @@
 .container {
     border-radius: 10px 10px 10px 10px;
-    background: #c7c7c7;
+    /* background: #272727; */
     width: 120px;
     color: black;
+    /* prevent selection */
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none; /* IE 10 and IE 11 */
+    user-select: none; /* Standard syntax */
 }
 
 .image {
@@ -20,4 +24,8 @@
 
 .title {
     min-height: 75px;
+}
+
+.info {
+    cursor: help;
 }

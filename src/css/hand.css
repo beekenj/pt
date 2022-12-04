@@ -4,6 +4,6 @@
     grid-template: auto auto / repeat(5, 1fr);
     gap: 20px;
     min-width: 800px;
-    min-height: 265px;
-    /* background: blue; */
+    min-height: 275px;
+    /* background:blue; */
 }

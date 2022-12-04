@@ -6,10 +6,10 @@ export default function Nav(props) {
             <div>
                 Power: {props.curPower}/{props.power}
             </div>
-            <div>
+            <div style={{color: props.curCommand >= 0 ? "white" : "red"}}>
                 Command: {props.curCommand}/{props.command}
             </div>
-            <div>
+            <div style={{color: props.curSupport >= 0 ? "white" : "red"}}>
                 Support: {props.curSupport}/{props.support}
             </div>
             <div>

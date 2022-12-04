@@ -8,7 +8,11 @@ export default function Systems(props) {
             'Engine', 
             'Navigation',
         ];
-    const prettySystems = systems.map(sys => <div><input type="checkbox" /> {sys}</div>)
+    const prettySystems = systems.map((sys, idx) => 
+            <div key={idx}>
+                <input type="checkbox" /> {sys}
+            </div>
+        );
     return (
         <>
             <h2>Systems</h2>
