@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import './App.css';
-import Tippy from '@tippyjs/react';
 import 'tippy.js/dist/tippy.css';
 import basedeck from './data/data';
 import Card from './components/Card';
@@ -8,15 +7,14 @@ import Hand from './components/Hand';
 import Nav from './components/Nav';
 import Systems from './components/Systems';
 import PlayButton from './components/PlayButton';
-// import tippy from 'tippy.js';
+import SystemIcon from './components/SystemIcon';
 
 function App() {
-  const HANDSIZE = 4;
+  const HANDSIZE = 5;
 
   const shuffleDeck = (arr) => {
     // starting from the end of the array, let j be random index between 
     // 0 and i. Switch the elements at indeces i and j; iterete.
-    // console.log("shuffle");
     for (let i = arr.length -1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [arr[i], arr[j]] = [arr[j], arr[i]];
@@ -25,53 +23,140 @@ function App() {
   };
 
   const drawCards = () => {
-    setFirstDraw(false);
-    setHand(draw.slice(0, HANDSIZE));
-    setDraw(prevDraw => {
-      // console.log(prevDraw, hand);
-      return prevDraw.slice(HANDSIZE-prevDraw.length)
-    }); 
-    if (hand.length > 0) { 
-      setHand(prevHand => prevHand.map(card => {
-        return {...card, selected:false}
-      }))
-      setDiscard(prevDiscard => [...hand, ...prevDiscard]);
-    }    
-    // console.log("clicked");
+    let inDraw = [...draw];
+    let inHand = [...hand];
+    let inDiscard = [...discard]
+    if (!legal) return;
+    if (HANDSIZE > deck.length) {
+      console.log("handsize too high for deck!");
+      return
+    }
+    if (firstDraw) {
+      // console.log("case 1");
+      setFirstDraw(false);
+
+      // fill hand
+      inHand = inDraw.slice(0, HANDSIZE);
+      // remove hand from draw
+      if (HANDSIZE === deck.length) inDraw = [];
+      else inDraw = inDraw.slice(HANDSIZE-inDraw.length);
+
+      setHand(inHand);
+      setDraw(inDraw);
+      // console.log(inDraw, inHand, inDiscard);
+      return
+    }
+    if (draw.length > HANDSIZE) {
+      // console.log("case 2");
+      
+      // discard hand
+      inDiscard = [
+        ...inHand.map(card => {
+          return {...card, selected:false}
+        }), 
+        ...inDiscard
+      ];
+      // fill hand
+      inHand = inDraw.slice(0, HANDSIZE);
+      // remove hand from draw
+      inDraw = inDraw.slice(HANDSIZE-inDraw.length);
+    } else if (draw.length === HANDSIZE) {
+      // console.log("case 3");
+
+      // discard hand
+      inDiscard = [
+        ...inHand.map(card => {
+          return {...card, selected:false}
+        }), 
+        ...inDiscard
+      ];
+      // fill hand
+      inHand = inDraw.slice(0, HANDSIZE);
+      // empty draw pile (edge case)
+      inDraw = [];
+    } else {
+      // console.log("case 4");
+
+      // discard hand
+      inDiscard = [
+        ...inHand.map(card => {
+          return {...card, selected:false}
+        }), 
+        ...inDiscard
+      ];
+      // shuffle discard, place under remaining hand
+      inDraw = [...inDraw, ...shuffleDeck(inDiscard)];
+      inDiscard = [];
+      // fill hand
+      inHand = inDraw.slice(0, HANDSIZE);
+      // remove hand from draw
+      inDraw = inDraw.slice(HANDSIZE-inDraw.length);
+    }
+    setDraw(inDraw);
+    setHand(inHand);
+    setDiscard(inDiscard);
+    // console.log(inDraw, inHand, inDiscard);
   };
 
-  const cardClick = (id) => {
-    setHand(prevHand => prevHand.map(card => {
-      return card.id === id && card.type !== 'system' ?
-        {...card, selected:!card.selected} :
-        card
+  const handleClick = (id, setState) => {
+    setState(prev => prev.map(elem => {
+      return elem.id === id && elem.type !== 'system' && elem.pow !== 0 ?
+        {...elem, selected:!elem.selected} :
+        elem
       }
     ));
-    // setHandSelect(prevSelect => [...prevSelect, prevSelect[idx]=!prevSelect[idx]]);
   };
 
-  const clickPlay = () => {
-    if (legal) drawCards();
+  const roll = () => {
+    const dummyStats = {
+      targeting:10,
+      evasion:10
+    };
+    const hitThreshold = 
+      Math.min(Math.max(1,3-combatStats.targeting+dummyStats.evasion),5);
+    const enemyHitThreshold = 
+      Math.min(Math.max(1, 3-dummyStats.targeting+combatStats.evasion),5);
+    console.log(enemyHitThreshold);
+    console.log(Math.ceil(Math.random()*6) > hitThreshold ? "Player Hit" : "Player Miss");
+    console.log(Math.ceil(Math.random()*6) > enemyHitThreshold ? "Enemy Hit" : "Enemy Miss");
   }
-  
+
+
+  /*
+    DEFINE STATE
+  */
   const [deck] = useState(basedeck.map(card => {
     return {
       ...card,
       selected:false, 
     }
   }));
+  const [systems, setSystems] = useState([
+    {id:0, name:'Shields', img:'g13879.png', pow:1, selected:false}, 
+    {id:1, name:'Scanners', img:'sensors.png', pow:1, selected:false}, 
+    {id:2, name:'ECM', img:'ecm.png', pow:1, selected:false}, 
+    {id:3, name:'Engine', img:'foot.png', pow:1, selected:false}, 
+    {id:4, name:'Navigation', img:'nav.png', pow:1, selected:false},
+  ]);
   // const [draw, setDraw] = useState(shuffleDeck(deck));
   const [draw, setDraw] = useState(deck);
   const [hand, setHand] = useState([]);
   // const [handSelect, setHandSelect] = useState(new Array(HANDSIZE).fill(false));
   const [discard, setDiscard] = useState([]);
   const [shipStats, setShipStats] = useState({});
-  const [curPower] = useState(0);
+  const [curPower, setCurPower] = useState(0);
   const [curCommand, setCurCommand] = useState(0);
   const [curSupport, setCurSupport] = useState(0);
   const [legal, setLegal] = useState(true);
   const [firstDraw, setFirstDraw] = useState(true);
   const [playTooltip, setPlayTootip] = useState("");
+  const [combatStats, setCombatStats] = useState({});
+  /*
+    END DEFINE STATE
+  */
+
+  // console.log(draw)
+  // console.log(draw, hand, discard);
 
   useEffect(() => {
     setDraw(shuffleDeck(deck));
@@ -87,23 +172,29 @@ function App() {
     });
   }, [deck]);
 
-  useEffect(() => {
-    if (draw.length < HANDSIZE) {
-      // console.log("SH")
-      setDraw(prevDraw => [...prevDraw, ...shuffleDeck(discard)]);
-      setDiscard([]);
-    }
-  }, [draw, discard]);
+  // useEffect(() => {
+    
+  // }, [hand, systems]);
 
   useEffect(() => {
     setCurSupport(shipStats.support + hand.reduce((acc, card) => card.selected ? 
       parseInt(card.actSup) + acc : 0 + acc, 0));
     setCurCommand(shipStats.command + hand.reduce((acc, card) => card.selected ? 
       parseInt(card.actCom) + acc : 0 + acc, 0));
-  }, [hand, shipStats]);
+    setCurPower(shipStats.power + systems.reduce((acc, sys) => sys.selected ? 
+      -1 + acc : 0 + acc, 0));
+    setCombatStats({
+      shields: systems[0].selected ? systems[0].pow : 0,
+      targeting: (hand.reduce((acc, card) => 
+        card.selected ? parseInt(card.targeting) + acc : 0 + acc, 0)) + 
+        (systems[1].selected ? systems[1].pow : 0),
+      evasion: (hand.reduce((acc, card) => 
+        card.selected ? parseInt(card.evasion) + acc : 0 + acc, 0)) + 
+        (systems[2].selected ? systems[2].pow : 0),
+    })
+  }, [hand, systems, shipStats]);
 
   useEffect(() => {
-    // let content = "Play Cards!";
     if (firstDraw) {
       setPlayTootip("Draw Cards!");
     } else if (curPower < 0) {
@@ -122,20 +213,30 @@ function App() {
     );
   }, [curCommand, curPower, curSupport, firstDraw]);
 
+
+  // 
   return (
     <div className="App">      
       <Nav 
-        power={shipStats.power}
-        command={shipStats.command}
-        support={shipStats.support}
+        draw={draw.length}
+        discard={discard.length}
         curPower={curPower}
         curCommand={curCommand}
         curSupport={curSupport}
         health={shipStats.health}
       />
-      <div style={{marginTop:"80px"}}>
+      <main style={{marginTop:"80px"}}>
         <h1>The action goes here!</h1>
-      </div>
+        <div>
+          Shields: {combatStats.shields}
+        </div>
+        <div>
+          Targeting: {combatStats.targeting}
+        </div>
+        <div>
+          Evasion: {combatStats.evasion}
+        </div>
+      </main>
       <div style={{
         position:"fixed", 
         // margin: "20px",
@@ -150,7 +251,7 @@ function App() {
               key={idx} 
               card={card} 
               selected={card.selected}
-              handleClick={() => cardClick(card.id)}
+              handleClick={() => handleClick(card.id, setHand)}
             />
           )}
         </Hand>
@@ -160,13 +261,25 @@ function App() {
           alignItems:"flex-end",
           margin:"20px",
         }}>
-          <Systems />
+          <Systems>
+            {systems.map((sys, idx) => 
+              <div key={idx}>
+                  <SystemIcon 
+                    name={sys.name} 
+                    img={sys.img} 
+                    selected={sys.selected} 
+                    handleClick={() => handleClick(sys.id, setSystems)}
+                  />
+              </div>
+            )}
+          </Systems>
+          <button style={{color:"black"}} onClick={roll}>Roll</button>
           <PlayButton
             playTooltip={playTooltip}
-            clickPlay={clickPlay}
+            clickPlay={drawCards}
             legal={legal}
             firstDraw={firstDraw}
-          />        
+          />  
         </div>
       </div>
     </div>

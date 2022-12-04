@@ -3,17 +3,20 @@ import '../css/nav.css';
 export default function Nav(props) {
     return (
         <nav>
-            <div>
-                Power: {props.curPower}/{props.power}
+            <div style={{color: props.curPower >= 0 ? "white" : "red"}}>
+                Power: {props.curPower}
             </div>
             <div style={{color: props.curCommand >= 0 ? "white" : "red"}}>
-                Command: {props.curCommand}/{props.command}
+                Command: {props.curCommand}
             </div>
             <div style={{color: props.curSupport >= 0 ? "white" : "red"}}>
-                Support: {props.curSupport}/{props.support}
+                Support: {props.curSupport}
             </div>
             <div>
                 Health: {props.health}
+            </div>
+            <div>
+                Draw/Discard: {props.draw}/{props.discard}
             </div>
         </nav>
     );
