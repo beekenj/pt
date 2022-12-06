@@ -1,26 +1,26 @@
 import { useState, useEffect } from 'react';
-import './App.css';
+
+// css
+import '../css/App.css';
 import 'tippy.js/dist/tippy.css';
-import basedeck from './data/data';
-import Card from './components/Card';
-import Hand from './components/Hand';
-import Nav from './components/Nav';
-import Systems from './components/Systems';
-import PlayButton from './components/PlayButton';
-import SystemIcon from './components/SystemIcon';
+
+// data
+import basedeck from '../data/data';
+
+// utilties
+import {shuffleDeck, handleClick} from '../libs/utilities'
+
+// Components
+import Card from './Card';
+import Hand from './Hand';
+import Nav from './Nav';
+import Systems from './Systems';
+import PlayButton from './PlayButton';
+import SystemIcon from './SystemIcon';
+import Stats from './Stats';
 
 function App() {
   const HANDSIZE = 5;
-
-  const shuffleDeck = (arr) => {
-    // starting from the end of the array, let j be random index between 
-    // 0 and i. Switch the elements at indeces i and j; iterete.
-    for (let i = arr.length -1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return arr;
-  };
 
   const drawCards = () => {
     let inDraw = [...draw];
@@ -98,14 +98,6 @@ function App() {
     // console.log(inDraw, inHand, inDiscard);
   };
 
-  const handleClick = (id, setState) => {
-    setState(prev => prev.map(elem => {
-      return elem.id === id && elem.type !== 'system' && elem.pow !== 0 ?
-        {...elem, selected:!elem.selected} :
-        elem
-      }
-    ));
-  };
 
   const roll = () => {
     const dummyStats = {
@@ -155,9 +147,6 @@ function App() {
     END DEFINE STATE
   */
 
-  // console.log(draw)
-  // console.log(draw, hand, discard);
-
   useEffect(() => {
     setDraw(shuffleDeck(deck));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -191,6 +180,7 @@ function App() {
       evasion: (hand.reduce((acc, card) => 
         card.selected ? parseInt(card.evasion) + acc : 0 + acc, 0)) + 
         (systems[2].selected ? systems[2].pow : 0),
+      initiative: (systems[3].selected ? systems[3].pow : 0),
     })
   }, [hand, systems, shipStats]);
 
@@ -214,7 +204,7 @@ function App() {
   }, [curCommand, curPower, curSupport, firstDraw]);
 
 
-  // 
+  // jsx
   return (
     <div className="App">      
       <Nav 
@@ -227,15 +217,12 @@ function App() {
       />
       <main style={{marginTop:"80px"}}>
         <h1>The action goes here!</h1>
-        <div>
-          Shields: {combatStats.shields}
-        </div>
-        <div>
-          Targeting: {combatStats.targeting}
-        </div>
-        <div>
-          Evasion: {combatStats.evasion}
-        </div>
+        <Stats 
+          shields={combatStats.shields}
+          targeting={combatStats.targeting}
+          evasion={combatStats.evasion}
+          initiative={combatStats.initiative}
+        />
       </main>
       <div style={{
         position:"fixed", 
