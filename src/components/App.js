@@ -22,6 +22,13 @@ import Stats from './Stats';
 function App() {
   const HANDSIZE = 5;
 
+  const dummyStats = {
+    shields:0,
+    targeting:0,
+    evasion:0,
+    initiative:0,
+  };
+
   const drawCards = () => {
     let inDraw = [...draw];
     let inHand = [...hand];
@@ -100,10 +107,10 @@ function App() {
 
 
   const roll = () => {
-    const dummyStats = {
-      targeting:10,
-      evasion:10
-    };
+    // const dummyStats = {
+    //   targeting:10,
+    //   evasion:10
+    // };
     const hitThreshold = 
       Math.min(Math.max(1,3-combatStats.targeting+dummyStats.evasion),5);
     const enemyHitThreshold = 
@@ -217,11 +224,19 @@ function App() {
       />
       <main style={{marginTop:"80px"}}>
         <h1>The action goes here!</h1>
+        <h3>Player:</h3>
         <Stats 
           shields={combatStats.shields}
           targeting={combatStats.targeting}
           evasion={combatStats.evasion}
           initiative={combatStats.initiative}
+          />
+        <h3>Enemy:</h3>
+        <Stats 
+          shields={dummyStats.shields}
+          targeting={dummyStats.targeting}
+          evasion={dummyStats.evasion}
+          initiative={dummyStats.initiative}
         />
       </main>
       <div style={{
