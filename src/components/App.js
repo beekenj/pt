@@ -8,7 +8,8 @@ import 'tippy.js/dist/tippy.css';
 import basedeck from '../data/data';
 
 // utilties
-import {shuffleDeck, handleClick} from '../libs/utilities'
+import {shuffleDeck, handleClick} from '../libs/utilities';
+import combat from '../libs/combat';
 
 // Components
 import Card from './Card';
@@ -98,32 +99,11 @@ function App() {
     // console.log(inDraw, inHand, inDiscard);
   };
 
-  const combat = (p1, p2) => {
-    let h1 = p1.health;
-    let h2 = p2.health;
-    let s1 = p1.shield;
-    let s2 = p2.shield;
+  const calcCombat = (p1, p2) => {
     const p1Hit = Math.min(Math.max(1,3-p1.targeting+p2.evasion),5);
-    const p2Hit = Math.min(Math.max(1, 3-p2.targeting+p1.evasion),5);
-
-    while (h1 > 0 && h2 > 0) {
-      h2 -= p1.hd.reduce((acc, hit) => 
-        Math.ceil(Math.random()*6) > p1Hit ? hit + acc : 0 + acc, 0);
-      h1 -= p1.hd.reduce((acc, hit) => 
-        Math.ceil(Math.random()*6) > p2Hit ? hit + acc : 0 + acc, 0);
-      // sum([i if ciel(rand()*6) > p1_hit else 0 for i in p1.hd])
-      // h2 -= 1
-      h1 += Math.max(s1-p2.shieldPen, 0);
-      h2 += Math.max(s2-p1.shieldPen, 0);
-      s2 -= 1
-      s1 -= 1
-    };
-
-    // console.log(h1, h2);
-
-    if (h1 >= h2) return 1;
-    else return 0;
-  };
+    // return Math.round((1-(p1Hit/6)));
+    return Math.floor((1-(p1Hit/6))*100);
+  }
 
   /*
     DEFINE STATE
@@ -141,10 +121,8 @@ function App() {
     {id:3, name:'Engine', img:'foot.png', pow:1, selected:false}, 
     {id:4, name:'Navigation', img:'nav.png', pow:1, selected:false},
   ]);
-  // const [draw, setDraw] = useState(shuffleDeck(deck));
   const [draw, setDraw] = useState(deck);
   const [hand, setHand] = useState([]);
-  // const [handSelect, setHandSelect] = useState(new Array(HANDSIZE).fill(false));
   const [discard, setDiscard] = useState([]);
   const [shipStats, setShipStats] = useState({});
   const [curPower, setCurPower] = useState(0);
@@ -163,20 +141,19 @@ function App() {
     initiative:0,
     health:1,
   });
-  const [simCombat] = useState(0);
+  const [playerHitChance, setPlayerHitChance] = useState(0);
+  const [enemyHitChance, setEnemyHitChance] = useState(0);
   /*
     END DEFINE STATE
   */
 
-  // callCombat(combatStats, dummyStats, 100)
-
-  // console.log(simulateCombat(combatStats, dummyStats, 10))
-
+  // Initial deck shuffle 
   useEffect(() => {
     setDraw(shuffleDeck(deck));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Set max stats when deck changes
   useEffect(() => {
     setShipStats({
       power: deck.reduce((acc, card) => acc + parseInt(card.power), 0),
@@ -186,10 +163,12 @@ function App() {
     });
   }, [deck]);
 
-  // useEffect(() => {
-    
-  // }, [hand, systems]);
+  useEffect(() => {
+    setPlayerHitChance(calcCombat(combatStats, dummyStats));
+    setEnemyHitChance(calcCombat(dummyStats, combatStats));
+  }, [combatStats, dummyStats]);
 
+  // Set all stats
   useEffect(() => {
     setCurSupport(shipStats.support + hand.reduce((acc, card) => card.selected ? 
       parseInt(card.actSup) + acc : 0 + acc, 0));
@@ -210,12 +189,12 @@ function App() {
       initiative: (systems[3].selected ? systems[3].pow : 0),
       health:1,
     });
-    // callCombat(combatStats, dummyStats, 100);
-    // setSimCombat(callCombat(combatStats, dummyStats, 100));
-  }, [hand, systems, shipStats, dummyStats, simCombat]);
-
+    
+  }, [hand, systems, shipStats, dummyStats, playerHitChance]);
+  
   
 
+  // Setup draw button
   useEffect(() => {
     if (firstDraw) {
       setPlayTootip("Draw Cards!");
@@ -236,6 +215,7 @@ function App() {
   }, [curCommand, curPower, curSupport, firstDraw]);
 
 
+
   // jsx
   return (
     <div className="App">      
@@ -249,7 +229,6 @@ function App() {
       />
       <main style={{marginTop:"80px"}}>
         <h1>The action goes here!</h1>
-        <h3>{simCombat}</h3>
         <div style={{display:"flex"}}>
         <Stats 
           title="Player"
@@ -257,6 +236,8 @@ function App() {
           targeting={combatStats.targeting}
           evasion={combatStats.evasion}
           initiative={combatStats.initiative}
+          health={combatStats.health}
+          hitChance={playerHitChance}
           />
         <Stats 
           title="Enemy"
@@ -264,6 +245,8 @@ function App() {
           targeting={dummyStats.targeting}
           evasion={dummyStats.evasion}
           initiative={dummyStats.initiative}
+          health={combatStats.health}
+          hitChance={enemyHitChance}
         />
         </div>
       </main>
