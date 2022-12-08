@@ -1,6 +1,9 @@
+import '../css/stats.css';
+
 export default function Stats(props) {
     return (
-        <>
+        <div className="stats--container">
+            <h3>{props.title}:</h3>
             <div>
                 Shields: {props.shields}
             </div>
@@ -13,6 +16,6 @@ export default function Stats(props) {
             <div>
                 Initiative: {props.initiative}
             </div>
-        </>
+        </div>
     )
 }

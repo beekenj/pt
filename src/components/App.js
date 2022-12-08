@@ -22,13 +22,6 @@ import Stats from './Stats';
 function App() {
   const HANDSIZE = 5;
 
-  const dummyStats = {
-    shields:0,
-    targeting:0,
-    evasion:0,
-    initiative:0,
-  };
-
   const drawCards = () => {
     let inDraw = [...draw];
     let inHand = [...hand];
@@ -105,21 +98,32 @@ function App() {
     // console.log(inDraw, inHand, inDiscard);
   };
 
+  const combat = (p1, p2) => {
+    let h1 = p1.health;
+    let h2 = p2.health;
+    let s1 = p1.shield;
+    let s2 = p2.shield;
+    const p1Hit = Math.min(Math.max(1,3-p1.targeting+p2.evasion),5);
+    const p2Hit = Math.min(Math.max(1, 3-p2.targeting+p1.evasion),5);
 
-  const roll = () => {
-    // const dummyStats = {
-    //   targeting:10,
-    //   evasion:10
-    // };
-    const hitThreshold = 
-      Math.min(Math.max(1,3-combatStats.targeting+dummyStats.evasion),5);
-    const enemyHitThreshold = 
-      Math.min(Math.max(1, 3-dummyStats.targeting+combatStats.evasion),5);
-    console.log(enemyHitThreshold);
-    console.log(Math.ceil(Math.random()*6) > hitThreshold ? "Player Hit" : "Player Miss");
-    console.log(Math.ceil(Math.random()*6) > enemyHitThreshold ? "Enemy Hit" : "Enemy Miss");
-  }
+    while (h1 > 0 && h2 > 0) {
+      h2 -= p1.hd.reduce((acc, hit) => 
+        Math.ceil(Math.random()*6) > p1Hit ? hit + acc : 0 + acc, 0);
+      h1 -= p1.hd.reduce((acc, hit) => 
+        Math.ceil(Math.random()*6) > p2Hit ? hit + acc : 0 + acc, 0);
+      // sum([i if ciel(rand()*6) > p1_hit else 0 for i in p1.hd])
+      // h2 -= 1
+      h1 += Math.max(s1-p2.shieldPen, 0);
+      h2 += Math.max(s2-p1.shieldPen, 0);
+      s2 -= 1
+      s1 -= 1
+    };
 
+    // console.log(h1, h2);
+
+    if (h1 >= h2) return 1;
+    else return 0;
+  };
 
   /*
     DEFINE STATE
@@ -150,9 +154,23 @@ function App() {
   const [firstDraw, setFirstDraw] = useState(true);
   const [playTooltip, setPlayTootip] = useState("");
   const [combatStats, setCombatStats] = useState({});
+  const [dummyStats] = useState({
+    hd:[1,1],
+    targeting:0,
+    evasion:0,
+    shield:0,
+    shieldPen:0,
+    initiative:0,
+    health:1,
+  });
+  const [simCombat] = useState(0);
   /*
     END DEFINE STATE
   */
+
+  // callCombat(combatStats, dummyStats, 100)
+
+  // console.log(simulateCombat(combatStats, dummyStats, 10))
 
   useEffect(() => {
     setDraw(shuffleDeck(deck));
@@ -180,16 +198,23 @@ function App() {
     setCurPower(shipStats.power + systems.reduce((acc, sys) => sys.selected ? 
       -1 + acc : 0 + acc, 0));
     setCombatStats({
-      shields: systems[0].selected ? systems[0].pow : 0,
+      hd:[1,1],
       targeting: (hand.reduce((acc, card) => 
-        card.selected ? parseInt(card.targeting) + acc : 0 + acc, 0)) + 
-        (systems[1].selected ? systems[1].pow : 0),
+      card.selected ? parseInt(card.targeting) + acc : 0 + acc, 0)) + 
+      (systems[1].selected ? systems[1].pow : 0),
       evasion: (hand.reduce((acc, card) => 
-        card.selected ? parseInt(card.evasion) + acc : 0 + acc, 0)) + 
-        (systems[2].selected ? systems[2].pow : 0),
+      card.selected ? parseInt(card.evasion) + acc : 0 + acc, 0)) + 
+      (systems[2].selected ? systems[2].pow : 0),
+      shield: systems[0].selected ? systems[0].pow : 0,
+      shieldPen:0,
       initiative: (systems[3].selected ? systems[3].pow : 0),
-    })
-  }, [hand, systems, shipStats]);
+      health:1,
+    });
+    // callCombat(combatStats, dummyStats, 100);
+    // setSimCombat(callCombat(combatStats, dummyStats, 100));
+  }, [hand, systems, shipStats, dummyStats, simCombat]);
+
+  
 
   useEffect(() => {
     if (firstDraw) {
@@ -224,20 +249,23 @@ function App() {
       />
       <main style={{marginTop:"80px"}}>
         <h1>The action goes here!</h1>
-        <h3>Player:</h3>
+        <h3>{simCombat}</h3>
+        <div style={{display:"flex"}}>
         <Stats 
-          shields={combatStats.shields}
+          title="Player"
+          shields={combatStats.shield}
           targeting={combatStats.targeting}
           evasion={combatStats.evasion}
           initiative={combatStats.initiative}
           />
-        <h3>Enemy:</h3>
         <Stats 
-          shields={dummyStats.shields}
+          title="Enemy"
+          shields={dummyStats.shield}
           targeting={dummyStats.targeting}
           evasion={dummyStats.evasion}
           initiative={dummyStats.initiative}
         />
+        </div>
       </main>
       <div style={{
         position:"fixed", 
@@ -275,7 +303,12 @@ function App() {
               </div>
             )}
           </Systems>
-          <button style={{color:"black"}} onClick={roll}>Roll</button>
+          <button style={{color:"black"}} onClick={() => 
+            // console.log(simulateCombat(combatStats, dummyStats, 10))
+            console.log(combat(combatStats, dummyStats) ? "Win!" : "Loss!")
+          }>
+              Roll
+          </button>
           <PlayButton
             playTooltip={playTooltip}
             clickPlay={drawCards}
