@@ -143,6 +143,7 @@ function App() {
   });
   const [playerHitChance, setPlayerHitChance] = useState(0);
   const [enemyHitChance, setEnemyHitChance] = useState(0);
+  const [combatResults, setCombatResults] = useState("");
   /*
     END DEFINE STATE
   */
@@ -249,6 +250,9 @@ function App() {
           hitChance={enemyHitChance}
         />
         </div>
+        <h2>
+          {combatResults}
+        </h2>
       </main>
       <div style={{
         position:"fixed", 
@@ -288,7 +292,7 @@ function App() {
           </Systems>
           <button style={{color:"black"}} onClick={() => 
             // console.log(simulateCombat(combatStats, dummyStats, 10))
-            console.log(combat(combatStats, dummyStats) ? "Win!" : "Loss!")
+            setCombatResults(combat(combatStats, dummyStats) ? "Win!" : "Loss!")
           }>
               Roll
           </button>
