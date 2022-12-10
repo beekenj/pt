@@ -1,23 +1,25 @@
 import '../css/stats.css';
 
 export default function Stats(props) {
+    const stats = props.stats;
+
     return (
         <div className="stats--container">
             <h3>{props.title}:</h3>
             <div>
-                Targeting: {props.targeting}
+                Targeting: {stats.targeting}
             </div>
             <div>
-                Evasion: {props.evasion}
+                Evasion: {stats.evasion}
             </div>
             <div>
-                Shields: {props.shields}
+                Shields: {stats.shield}
             </div>
             <div>
-                Initiative: {props.initiative}
+                Initiative: {stats.initiative}
             </div>
             <div>
-                Health: {props.health}
+                Armor: {stats.armor}
             </div>
             <br />
             <div>

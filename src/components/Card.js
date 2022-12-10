@@ -3,7 +3,7 @@ import '../css/card.css';
 // import Tippy from '@tippyjs/react/headless';
 import tippy from 'tippy.js';
 import 'tippy.js/dist/tippy.css';
-import CardTooltip from './CardTooltip';
+// import CardTooltip from './CardTooltip';
 
 export default function Card(props) {
     const {icon, name, type} = props.card;
@@ -26,14 +26,35 @@ export default function Card(props) {
         cursor: type === 'system' ? "not-allowed" : "pointer",
     }
 
+    const test = () => {
+        console.log("ability");
+    }
+
     return (
         <div className='container' style={cardStyle} onClick={props.handleClick}>
-            {/* <h1>hi</h1> */}
             <div className='image'>
                 <img src={require(`../img/${icon}`)} alt="icon"/>
             </div>
             <div className='title'>
                 <h3>{name}</h3>
+            </div>
+            <div style={{display:"flex", justifyContent:"center"}}>
+                {type === 'officer' && <div className='ability' style={{
+                    backgroundColor: props.selected ? "#4c66af" : "gray",
+                    cursor: "context-menu",
+                }}
+                onClick={test}
+                >
+                <img 
+                    // id={`img${props.name}`} 
+                    src={require(`../img/nav.png`)} 
+                    alt="testing" 
+                    style={{
+                        width:"32px",
+                        height:"32px",
+                    }}
+                />
+                </div>}
             </div>
             {type === 'ship' && <div className='info'>
                 <div id='targeting' className='stats'>{props.card.targeting}</div>

@@ -8,8 +8,8 @@ import 'tippy.js/dist/tippy.css';
 import basedeck from '../data/data';
 
 // utilties
-import {shuffleDeck, handleClick} from '../libs/utilities';
-import combat from '../libs/combat';
+import { shuffleDeck, handleClick, clickHand, drawCards } from '../libs/utilities';
+import { calcCombat, combatAnimation } from '../libs/combat';
 
 // Components
 import Card from './Card';
@@ -19,91 +19,10 @@ import Systems from './Systems';
 import PlayButton from './PlayButton';
 import SystemIcon from './SystemIcon';
 import Stats from './Stats';
+import CombatSymbol from './CombatSymbol';
 
 function App() {
-  const HANDSIZE = 5;
-
-  const drawCards = () => {
-    let inDraw = [...draw];
-    let inHand = [...hand];
-    let inDiscard = [...discard]
-    if (!legal) return;
-    if (HANDSIZE > deck.length) {
-      console.log("handsize too high for deck!");
-      return
-    }
-    if (firstDraw) {
-      // console.log("case 1");
-      setFirstDraw(false);
-
-      // fill hand
-      inHand = inDraw.slice(0, HANDSIZE);
-      // remove hand from draw
-      if (HANDSIZE === deck.length) inDraw = [];
-      else inDraw = inDraw.slice(HANDSIZE-inDraw.length);
-
-      setHand(inHand);
-      setDraw(inDraw);
-      // console.log(inDraw, inHand, inDiscard);
-      return
-    }
-    if (draw.length > HANDSIZE) {
-      // console.log("case 2");
-      
-      // discard hand
-      inDiscard = [
-        ...inHand.map(card => {
-          return {...card, selected:false}
-        }), 
-        ...inDiscard
-      ];
-      // fill hand
-      inHand = inDraw.slice(0, HANDSIZE);
-      // remove hand from draw
-      inDraw = inDraw.slice(HANDSIZE-inDraw.length);
-    } else if (draw.length === HANDSIZE) {
-      // console.log("case 3");
-
-      // discard hand
-      inDiscard = [
-        ...inHand.map(card => {
-          return {...card, selected:false}
-        }), 
-        ...inDiscard
-      ];
-      // fill hand
-      inHand = inDraw.slice(0, HANDSIZE);
-      // empty draw pile (edge case)
-      inDraw = [];
-    } else {
-      // console.log("case 4");
-
-      // discard hand
-      inDiscard = [
-        ...inHand.map(card => {
-          return {...card, selected:false}
-        }), 
-        ...inDiscard
-      ];
-      // shuffle discard, place under remaining hand
-      inDraw = [...inDraw, ...shuffleDeck(inDiscard)];
-      inDiscard = [];
-      // fill hand
-      inHand = inDraw.slice(0, HANDSIZE);
-      // remove hand from draw
-      inDraw = inDraw.slice(HANDSIZE-inDraw.length);
-    }
-    setDraw(inDraw);
-    setHand(inHand);
-    setDiscard(inDiscard);
-    // console.log(inDraw, inHand, inDiscard);
-  };
-
-  const calcCombat = (p1, p2) => {
-    const p1Hit = Math.min(Math.max(1,3-p1.targeting+p2.evasion),5);
-    // return Math.round((1-(p1Hit/6)));
-    return Math.floor((1-(p1Hit/6))*100);
-  }
+  const HANDSIZE = 5;  
 
   /*
     DEFINE STATE
@@ -121,13 +40,12 @@ function App() {
     {id:3, name:'Engine', img:'foot.png', pow:1, selected:false}, 
     {id:4, name:'Navigation', img:'nav.png', pow:1, selected:false},
   ]);
-  const [draw, setDraw] = useState(deck);
-  const [hand, setHand] = useState([]);
-  const [discard, setDiscard] = useState([]);
+  const [deckCycle, setDeckCycle] = useState({
+    draw:deck,
+    hand:[],
+    discard:[],
+  })
   const [shipStats, setShipStats] = useState({});
-  const [curPower, setCurPower] = useState(0);
-  const [curCommand, setCurCommand] = useState(0);
-  const [curSupport, setCurSupport] = useState(0);
   const [legal, setLegal] = useState(true);
   const [firstDraw, setFirstDraw] = useState(true);
   const [playTooltip, setPlayTootip] = useState("");
@@ -136,22 +54,33 @@ function App() {
     hd:[1,1],
     targeting:0,
     evasion:0,
-    shield:0,
+    shield:1,
     shieldPen:0,
     initiative:0,
-    health:1,
+    armor:1,
   });
   const [playerHitChance, setPlayerHitChance] = useState(0);
   const [enemyHitChance, setEnemyHitChance] = useState(0);
   const [combatResults, setCombatResults] = useState("");
+  const [fadeProp, setFadeProp] = useState({
+    fade:'fade-out',
+  });
+  const [abilityMenu] = useState(true);
   /*
     END DEFINE STATE
   */
 
+  // console.log("render");
+
+
   // Initial deck shuffle 
   useEffect(() => {
-    setDraw(shuffleDeck(deck));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // setDraw(shuffleDeck(deck));
+    setDeckCycle(prevDeck => {
+      return {
+        ...prevDeck,
+        draw:shuffleDeck(prevDeck.draw),
+    }});
   }, []);
 
   // Set max stats when deck changes
@@ -164,6 +93,7 @@ function App() {
     });
   }, [deck]);
 
+  // Initialize hit chances
   useEffect(() => {
     setPlayerHitChance(calcCombat(combatStats, dummyStats));
     setEnemyHitChance(calcCombat(dummyStats, combatStats));
@@ -171,82 +101,79 @@ function App() {
 
   // Set all stats
   useEffect(() => {
-    setCurSupport(shipStats.support + hand.reduce((acc, card) => card.selected ? 
-      parseInt(card.actSup) + acc : 0 + acc, 0));
-    setCurCommand(shipStats.command + hand.reduce((acc, card) => card.selected ? 
-      parseInt(card.actCom) + acc : 0 + acc, 0));
-    setCurPower(shipStats.power + systems.reduce((acc, sys) => sys.selected ? 
-      -1 + acc : 0 + acc, 0));
     setCombatStats({
-      hd:[1,1],
-      targeting: (hand.reduce((acc, card) => 
-      card.selected ? parseInt(card.targeting) + acc : 0 + acc, 0)) + 
-      (systems[1].selected ? systems[1].pow : 0),
-      evasion: (hand.reduce((acc, card) => 
-      card.selected ? parseInt(card.evasion) + acc : 0 + acc, 0)) + 
-      (systems[2].selected ? systems[2].pow : 0),
-      shield: systems[0].selected ? systems[0].pow : 0,
-      shieldPen:0,
-      initiative: (systems[3].selected ? systems[3].pow : 0),
-      health:1,
+        support: deckCycle.hand.length > 0 ? 
+          shipStats.support + 
+          deckCycle.hand.reduce((acc, card) => card.selected ? 
+          parseInt(card.actSup) + acc : 0 + acc, 0) : 
+          0,
+        command: deckCycle.hand.length > 0 ? 
+          shipStats.command + 
+          deckCycle.hand.reduce((acc, card) => card.selected ? 
+          parseInt(card.actCom) + acc : 0 + acc, 0) :
+          0,
+        power: deckCycle.hand.length > 0 ? 
+          shipStats.power + 
+          systems.reduce((acc, sys) => sys.selected ? 
+          -1 + acc : 0 + acc, 0) : 
+          0,
+        hd:[1,1],
+        targeting: (deckCycle.hand.reduce((acc, card) => 
+        card.selected ? parseInt(card.targeting) + acc : 0 + acc, 0)) + 
+        (systems[1].selected ? systems[1].pow : 0),
+        evasion: (deckCycle.hand.reduce((acc, card) => 
+        card.selected ? parseInt(card.evasion) + acc : 0 + acc, 0)) + 
+        (systems[2].selected ? systems[2].pow : 0),
+        shield: systems[0].selected ? systems[0].pow : 0,
+        shieldPen:0,
+        initiative: (systems[3].selected ? systems[3].pow : 0),
+        armor:1,
     });
     
-  }, [hand, systems, shipStats, dummyStats, playerHitChance]);
-  
-  
+  }, [deckCycle, systems, shipStats, dummyStats, playerHitChance]);
 
   // Setup draw button
   useEffect(() => {
     if (firstDraw) {
       setPlayTootip("Draw Cards!");
-    } else if (curPower < 0) {
+    } else if (combatStats.power < 0) {
       setPlayTootip("Insufficient Power!");
-    } else if (curCommand < 0) {
+    } else if (combatStats.command < 0) {
       setPlayTootip("Insufficient Command!");      
-    } else if (curSupport < 0) {
+    } else if (combatStats.support < 0) {
       setPlayTootip("Insufficient Support!");      
     } else {
       setPlayTootip("Play Cards!");      
     }
     setLegal(
-      curPower >= 0 && 
-      curCommand >= 0 &&
-      curSupport >= 0
+      combatStats.power >= 0 && 
+      combatStats.command >= 0 &&
+      combatStats.support >= 0
     );
-  }, [curCommand, curPower, curSupport, firstDraw]);
-
-
+  }, [combatStats, firstDraw]);
 
   // jsx
   return (
     <div className="App">      
       <Nav 
-        draw={draw.length}
-        discard={discard.length}
-        curPower={curPower}
-        curCommand={curCommand}
-        curSupport={curSupport}
+        draw={deckCycle.draw.length}
+        discard={deckCycle.discard.length}
+        curPower={combatStats.power}
+        curCommand={combatStats.command}
+        curSupport={combatStats.support}
         health={shipStats.health}
       />
       <main style={{marginTop:"80px"}}>
-        <h1>The action goes here!</h1>
-        <div style={{display:"flex"}}>
+        <div style={{display:"flex", alignItems:"center"}}>
         <Stats 
           title="Player"
-          shields={combatStats.shield}
-          targeting={combatStats.targeting}
-          evasion={combatStats.evasion}
-          initiative={combatStats.initiative}
-          health={combatStats.health}
+          stats={combatStats}
           hitChance={playerHitChance}
-          />
+        />
+        <CombatSymbol fadeProp={fadeProp}/>
         <Stats 
           title="Enemy"
-          shields={dummyStats.shield}
-          targeting={dummyStats.targeting}
-          evasion={dummyStats.evasion}
-          initiative={dummyStats.initiative}
-          health={combatStats.health}
+          stats={dummyStats}
           hitChance={enemyHitChance}
         />
         </div>
@@ -254,6 +181,7 @@ function App() {
           {combatResults}
         </h2>
       </main>
+      
       <div style={{
         position:"fixed", 
         // margin: "20px",
@@ -261,14 +189,27 @@ function App() {
         bottom:"0", 
         right:"0",
         left:"0",
-      }}>      
+      }}>   
+      {abilityMenu && <Systems>
+            {systems.map((sys, idx) => 
+              <div key={idx}>
+                  <SystemIcon 
+                    name={sys.name} 
+                    img={sys.img} 
+                    selected={sys.selected} 
+                    handleClick={() => handleClick(sys.id, setSystems)}
+                  />
+              </div>
+            )}
+          </Systems>}
+          <br/>
         <Hand>
-          {hand.length > 0 && hand.map((card, idx) => 
+          {deckCycle.hand.length > 0 && deckCycle.hand.map((card, idx) => 
             <Card 
               key={idx} 
               card={card} 
               selected={card.selected}
-              handleClick={() => handleClick(card.id, setHand)}
+              handleClick={() => clickHand(card.id, setDeckCycle)}
             />
           )}
         </Hand>
@@ -290,15 +231,21 @@ function App() {
               </div>
             )}
           </Systems>
-          <button style={{color:"black"}} onClick={() => 
-            // console.log(simulateCombat(combatStats, dummyStats, 10))
-            setCombatResults(combat(combatStats, dummyStats) ? "Win!" : "Loss!")
+          <button style={{
+            color:"black", 
+            cursor:"pointer", 
+          }} className="button" onClick={() => {
+              combatAnimation(combatStats, dummyStats, setCombatResults, setFadeProp);
+            }
           }>
               Roll
           </button>
           <PlayButton
             playTooltip={playTooltip}
-            clickPlay={drawCards}
+            clickPlay={() => {
+              setFirstDraw(false);
+              drawCards(HANDSIZE, deckCycle, setDeckCycle, legal);
+            }}
             legal={legal}
             firstDraw={firstDraw}
           />  

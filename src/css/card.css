@@ -45,3 +45,11 @@
     display: inline;
     vertical-align: middle;
 }
+
+.ability {
+    /* border: #000000 solid; */
+    border-radius: 5px;
+    background-color: #4c66af;
+    width: 32px;
+    height: 32px;
+}
