@@ -8,30 +8,11 @@ function shuffleDeck(arr) {
   return arr;
 };
 
-function handleClick(id, setState) {
-  setState(prev => prev.map(elem => {
-    return elem.id === id && elem.type !== 'system' && elem.pow !== 0 ?
-      {...elem, selected:!elem.selected} :
-      elem
-    }
-  ));
+function handleClick(id, dispatch, setState) {
+  dispatch({type:setState, id:id});
 };
 
-function clickHand(id, setState) {
-  setState(prev => {
-    // console.log(prev.hand)
-    // return prev
-    return {
-      ...prev,
-      hand: prev.hand.map(elem => {
-        return elem.id === id && elem.type !== 'system' && elem.pow !== 0 ?
-          {...elem, selected:!elem.selected} :
-          elem
-      }),
-    }});
-}
-
-const drawCards = (n, deckCycle, setDeckCycle, legal) => {
+const drawCards = (n, deckCycle, dispatch, setDeckCycle, legal) => {
   let inDraw = [...deckCycle.draw];
   let inHand = [...deckCycle.hand];
   let inDiscard = [...deckCycle.discard];
@@ -52,11 +33,12 @@ const drawCards = (n, deckCycle, setDeckCycle, legal) => {
 
     // setHand(inHand);
     // setDraw(inDraw);
-    setDeckCycle({
-      draw:inDraw,
-      hand:inHand,
-      discard:inDiscard,
-    });
+    // setDeckCycle({
+    //   draw:inDraw,
+    //   hand:inHand,
+    //   discard:inDiscard,
+    // });
+    dispatch({type:setDeckCycle, draw:inDraw, hand:inHand, discard:inDiscard});
     // console.log(inDraw, inHand, inDiscard);
     return
   }
@@ -107,12 +89,13 @@ const drawCards = (n, deckCycle, setDeckCycle, legal) => {
     inDraw = inDraw.slice(n-inDraw.length);
   };
 
-  setDeckCycle({
-    draw:inDraw,
-    hand:inHand,
-    discard:inDiscard,
-  });
+  // setDeckCycle({
+  //   draw:inDraw,
+  //   hand:inHand,
+  //   discard:inDiscard,
+  // });
+  dispatch({type:setDeckCycle, draw:inDraw, hand:inHand, discard:inDiscard});
   // console.log("1,1".split(",").map(elem => +elem));
 };
 
-export {shuffleDeck, handleClick, clickHand, drawCards};
+export {shuffleDeck, handleClick, drawCards};

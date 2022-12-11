@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useReducer } from 'react';
 
 // css
 import '../css/App.css';
@@ -22,30 +22,85 @@ import SystemIcon from './SystemIcon';
 import Stats from './Stats';
 import CombatSymbol from './CombatSymbol';
 
-function App() {
-  const HANDSIZE = 5;  
-
-  /*
-    DEFINE STATE
-  */
-  const [deckComplete] = useState(basedeck.map(card => {
+const initState = {
+  deckComplete: basedeck.map(card => {
     return {
       ...card,
       selected:false, 
     }
-  }));
-  const [deckCycle, setDeckCycle] = useState({
-    draw:deckComplete,
+  }),
+  deckCycle: {
+    draw:shuffleDeck(basedeck.map(card => {
+      return {
+        ...card,
+        selected:false, 
+      }
+    })),
     hand:[],
     discard:[],
-  });
-  const [systems, setSystems] = useState([
+  },
+  systems: [
     {id:0, name:'Shields', img:'g13879.png', pow:1, selected:false}, 
     {id:1, name:'Scanners', img:'sensors.png', pow:1, selected:false}, 
     {id:2, name:'ECM', img:'ecm.png', pow:1, selected:false}, 
     {id:3, name:'Engine', img:'foot.png', pow:1, selected:false}, 
     {id:4, name:'Navigation', img:'nav.png', pow:1, selected:false},
-  ]);
+  ],
+};
+
+const reducer = (state, action) => {
+  switch (action.type) {
+    case 'setDeckCycleDraw':
+      return {
+        ...state,
+        deckCycle: {
+          draw:action.draw,
+          hand:action.hand,
+          discard:action.discard,
+        },
+    };
+    case 'setDeckCycleClick':
+      return {
+        ...state,
+        deckCycle: {
+          ...state.deckCycle,
+          hand: state.deckCycle.hand.map(elem => {
+            return elem.id === action.id && elem.type !== 'system' && elem.pow !== 0 ?
+              {...elem, selected:!elem.selected} :
+              elem
+          }),            
+        }
+    };
+    case 'setSystems':
+      return {
+        ...state,
+        systems: state.systems.map(elem => {
+          return elem.id === action.id && elem.type !== 'system' && elem.pow !== 0 ?
+            {...elem, selected:!elem.selected} :
+            elem
+          })
+      }
+    default:
+      return state;
+  }
+}
+
+function App() {
+  const HANDSIZE = 5;  
+
+  const [state, dispatch] = useReducer(reducer, initState);
+  // console.log(state)
+
+  /*
+    DEFINE STATE
+  */
+  // const [systems, setSystems] = useState([
+  //   {id:0, name:'Shields', img:'g13879.png', pow:1, selected:false}, 
+  //   {id:1, name:'Scanners', img:'sensors.png', pow:1, selected:false}, 
+  //   {id:2, name:'ECM', img:'ecm.png', pow:1, selected:false}, 
+  //   {id:3, name:'Engine', img:'foot.png', pow:1, selected:false}, 
+  //   {id:4, name:'Navigation', img:'nav.png', pow:1, selected:false},
+  // ]);
   const [shipStats, setShipStats] = useState({});
   const [legal, setLegal] = useState(true);
   const [firstDraw, setFirstDraw] = useState(true);
@@ -80,26 +135,15 @@ function App() {
 
   // console.log("render");
 
-
-  // Initial deck shuffle 
-  useEffect(() => {
-    // setDraw(shuffleDeck(deck));
-    setDeckCycle(prevDeck => {
-      return {
-        ...prevDeck,
-        draw:shuffleDeck(prevDeck.draw),
-    }});
-  }, []);
-
   // Set max stats when deck changes
   useEffect(() => {
     setShipStats({
-      power: deckComplete.reduce((acc, card) => acc + parseInt(card.power), 0),
-      command: deckComplete.reduce((acc, card) => acc + parseInt(card.command), 0),
-      support: deckComplete.reduce((acc, card) => acc + parseInt(card.support), 0),
-      health: deckComplete.reduce((acc, card) => acc + parseInt(card.health), 0),
+      power: state.deckComplete.reduce((acc, card) => acc + parseInt(card.power), 0),
+      command: state.deckComplete.reduce((acc, card) => acc + parseInt(card.command), 0),
+      support: state.deckComplete.reduce((acc, card) => acc + parseInt(card.support), 0),
+      health: state.deckComplete.reduce((acc, card) => acc + parseInt(card.health), 0),
     });
-  }, [deckComplete, allEnemies]);
+  }, [state.deckComplete, allEnemies]);
 
   // Initialize hit chances
   useEffect(() => {
@@ -110,34 +154,34 @@ function App() {
   // Set all stats
   useEffect(() => {
     setCombatStats({
-      support: deckCycle.hand.length > 0 ? 
+      support: state.deckCycle.hand.length > 0 ? 
         shipStats.support + 
-        deckCycle.hand.reduce((acc, card) => card.selected ? 
+        state.deckCycle.hand.reduce((acc, card) => card.selected ? 
         parseInt(card.actSup) + acc : 0 + acc, 0) : 
         0,
-      command: deckCycle.hand.length > 0 ? 
+      command: state.deckCycle.hand.length > 0 ? 
         shipStats.command + 
-        deckCycle.hand.reduce((acc, card) => card.selected ? 
+        state.deckCycle.hand.reduce((acc, card) => card.selected ? 
         parseInt(card.actCom) + acc : 0 + acc, 0) :
         0,
-      power: deckCycle.hand.length > 0 ? 
+      power: state.deckCycle.hand.length > 0 ? 
         shipStats.power + 
-        systems.reduce((acc, sys) => sys.selected ? 
+        state.systems.reduce((acc, sys) => sys.selected ? 
         -1 + acc : 0 + acc, 0) : 
         0,
       hd:[1,1],
-      targeting: (deckCycle.hand.reduce((acc, card) => 
+      targeting: (state.deckCycle.hand.reduce((acc, card) => 
       card.selected ? parseInt(card.targeting) + acc : 0 + acc, 0)) + 
-      (systems[1].selected ? systems[1].pow : 0),
-      evasion: (deckCycle.hand.reduce((acc, card) => 
+      (state.systems[1].selected ? state.systems[1].pow : 0),
+      evasion: (state.deckCycle.hand.reduce((acc, card) => 
       card.selected ? parseInt(card.evasion) + acc : 0 + acc, 0)) + 
-      (systems[2].selected ? systems[2].pow : 0),
-      shield: systems[0].selected ? systems[0].pow : 0,
+      (state.systems[2].selected ? state.systems[2].pow : 0),
+      shield: state.systems[0].selected ? state.systems[0].pow : 0,
       shieldPen:0,
-      initiative: (systems[3].selected ? systems[3].pow : 0),
+      initiative: (state.systems[3].selected ? state.systems[3].pow : 0),
       armor:1,
     });    
-  }, [deckCycle, systems, shipStats]);
+  }, [state.deckCycle, state.systems, shipStats]);
 
   // Setup draw button
   useEffect(() => {
@@ -163,8 +207,10 @@ function App() {
   return (
     <div className="App">      
       <Nav 
-        draw={deckCycle.draw.length}
-        discard={deckCycle.discard.length}
+        // draw={0}
+        draw={state.deckCycle.draw.length}
+        discard={state.deckCycle.discard.length}
+        // discard={0}
         curPower={combatStats.power}
         curCommand={combatStats.command}
         curSupport={combatStats.support}
@@ -198,25 +244,25 @@ function App() {
         left:"0",
       }}>   
       {abilityMenu && <Systems>
-            {systems.map((sys, idx) => 
+            {state.systems.map((sys, idx) => 
               <div key={idx}>
                   <SystemIcon 
                     name={sys.name} 
                     img={sys.img} 
                     selected={sys.selected} 
-                    handleClick={() => handleClick(sys.id, setSystems)}
+                    handleClick={() => handleClick(sys.id, dispatch, 'setSystems')}
                   />
               </div>
             )}
           </Systems>}
           <br/>
         <Hand>
-          {deckCycle.hand.length > 0 && deckCycle.hand.map((card, idx) => 
+          {state.deckCycle.hand.length > 0 && state.deckCycle.hand.map((card, idx) => 
             <Card 
               key={idx} 
               card={card} 
               selected={card.selected}
-              handleClick={() => clickHand(card.id, setDeckCycle)}
+              handleClick={() => handleClick(card.id, dispatch, 'setDeckCycleClick')}
             />
           )}
         </Hand>
@@ -227,13 +273,13 @@ function App() {
           margin:"20px",
         }}>
           <Systems>
-            {systems.map((sys, idx) => 
+            {state.systems.map((sys, idx) => 
               <div key={idx}>
                   <SystemIcon 
                     name={sys.name} 
                     img={sys.img} 
                     selected={sys.selected} 
-                    handleClick={() => handleClick(sys.id, setSystems)}
+                    handleClick={() => handleClick(sys.id, dispatch, 'setSystems')}
                   />
               </div>
             )}
@@ -251,7 +297,7 @@ function App() {
             playTooltip={playTooltip}
             clickPlay={() => {
               setFirstDraw(false);
-              drawCards(HANDSIZE, deckCycle, setDeckCycle, legal);
+              drawCards(HANDSIZE, state.deckCycle, dispatch, 'setDeckCycleDraw', legal);
             }}
             legal={legal}
             firstDraw={firstDraw}
