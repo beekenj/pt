@@ -1,8 +1,8 @@
-id,icon,name,type,power,command,support,health,actPow,actCom,actSup,damage,targeting,evasion
+id,icon,name,type,power,command,support,armor,actPow,actCom,actSup,damage,targeting,evasion
 0,g35934.png,Reactor,system,4,0,0,0,0,0,0,0,0,0
 1,g13879.png,Shield Generator,system,-2,0,0,0,0,0,0,0,0,0
 2,g3191.png,Hanger,system,-1,0,1,0,0,0,0,0,0,0
-3,g370.png,Hull,system,0,0,0,4,0,0,0,0,0,0
+3,g370.png,Hull,system,0,0,0,1,0,0,0,0,0,0
 4,g15616.png,Scout,ship,0,0,0,0,0,0,-1,1,1,0
 5,g15616.png,Scout,ship,0,0,0,0,0,0,-1,1,1,0
 6,g7112.png,Interceptor,ship,0,0,0,0,0,0,-1,1,0,1
