@@ -48,6 +48,24 @@ const initState = {
   ],
   shipStats: {},
   legal: true,
+  firstDraw: true,
+  playTooltip: "",
+  combatStats: {},
+  allEnemies: enemies.map(enemy => {
+    return {
+      ...enemy,
+      id: +enemy.id,
+      difficulty: +enemy.difficulty,
+      targeting: +enemy.targeting,
+      evasion: +enemy.evasion,
+      shield: +enemy.shield,
+      shieldPen: +enemy.shieldPen,
+      initiative: +enemy.initiative,
+      armor: +enemy.armor,
+      name: enemy.name,
+      hd: enemy.hd.split(",").map(elem => +elem),
+    }
+  }),
 };
 
 const reducer = (state, action) => {
@@ -94,10 +112,46 @@ const reducer = (state, action) => {
         },
     };
     case 'setLegal':
-      return {...state, legal:action.power >= 0 && action.command >= 0 && action.support >= 0}
-        // stats.combatStats.power >= 0 && 
-        // stats.combatStats.command >= 0 &&
-        // stats.combatStats.support >= 0
+      return {
+        ...state, 
+        legal: state.combatStats.power >= 0 && 
+              state.combatStats.command >= 0 && 
+              state.combatStats.support >= 0,
+      }
+    case 'setFirstDraw':
+      return {...state, firstDraw: false};
+    case 'setPlayTooltip':
+      return {...state, playTooltip: action.text}
+    case 'setCombatStats':
+      return {
+        ...state,
+        combatStats: {
+          support: state.deckCycle.hand.length > 0 ? 
+            state.shipStats.support + 
+            state.deckCycle.hand.reduce((acc, card) => card.selected ? 
+            parseInt(card.actSup) + acc : 0 + acc, 0) : 
+            state.shipStats.support,
+          command: state.deckCycle.hand.length > 0 ? 
+            state.shipStats.command + 
+            state.deckCycle.hand.reduce((acc, card) => card.selected ? 
+            parseInt(card.actCom) + acc : 0 + acc, 0) :
+            state.shipStats.command,
+          power: state.shipStats.power + 
+            state.systems.reduce((acc, sys) => sys.selected ? 
+            -1 + acc : 0 + acc, 0),
+          hd:[1,1],
+          targeting: (state.deckCycle.hand.reduce((acc, card) => 
+          card.selected ? parseInt(card.targeting) + acc : 0 + acc, 0)) + 
+          (state.systems[1].selected ? state.systems[1].pow : 0),
+          evasion: (state.deckCycle.hand.reduce((acc, card) => 
+          card.selected ? parseInt(card.evasion) + acc : 0 + acc, 0)) + 
+          (state.systems[2].selected ? state.systems[2].pow : 0),
+          shield: state.systems[0].selected ? state.systems[0].pow : 0,
+          shieldPen:0,
+          initiative: (state.systems[3].selected ? state.systems[3].pow : 0),
+          armor:1,
+        }
+      }
     default:
       return state;
   }
@@ -112,26 +166,7 @@ function App() {
   /*
     DEFINE STATE
   */
-  // const [legal, setLegal] = useState(true);
-  const [firstDraw, setFirstDraw] = useState(true);
-  const [playTooltip, setPlayTootip] = useState("");
-  const [combatStats, setCombatStats] = useState({});
-  const [allEnemies] = useState(enemies.map(enemy => {
-    return {
-      ...enemy,
-      id: +enemy.id,
-      difficulty: +enemy.difficulty,
-      targeting: +enemy.targeting,
-      evasion: +enemy.evasion,
-      shield: +enemy.shield,
-      shieldPen: +enemy.shieldPen,
-      initiative: +enemy.initiative,
-      armor: +enemy.armor,
-      name: enemy.name,
-      hd: enemy.hd.split(",").map(elem => +elem),
-    }
-  }));
-  const [enemyStats] = useState(allEnemies[Math.floor(Math.random()*allEnemies.length)]);
+  const [enemyStats] = useState(state.allEnemies[Math.floor(Math.random()*state.allEnemies.length)]);
   const [playerHitChance, setPlayerHitChance] = useState(0);
   const [enemyHitChance, setEnemyHitChance] = useState(0);
   const [combatResults, setCombatResults] = useState("");
@@ -144,69 +179,37 @@ function App() {
   */
  
  // console.log("render");
- console.log(combatStats)
+//  console.log(combatStats)
  
   // Set max stats when deck changes
   useEffect(() => {
     dispatch({type:'setShipStats'});
-  }, [state.deckComplete, allEnemies]);
+  }, [state.deckComplete, state.allEnemies]);
 
   // Initialize hit chances
   useEffect(() => {
-    setPlayerHitChance(calcCombat(combatStats, enemyStats));
-    setEnemyHitChance(calcCombat(enemyStats, combatStats));
-  }, [combatStats, enemyStats]);
+    setPlayerHitChance(calcCombat(state.combatStats, enemyStats));
+    setEnemyHitChance(calcCombat(enemyStats, state.combatStats));
+  }, [state.combatStats, enemyStats]);
 
   // Set all stats
   useEffect(() => {
-    setCombatStats({
-      support: state.deckCycle.hand.length > 0 ? 
-        state.shipStats.support + 
-        state.deckCycle.hand.reduce((acc, card) => card.selected ? 
-        parseInt(card.actSup) + acc : 0 + acc, 0) : 
-        state.shipStats.support,
-      command: state.deckCycle.hand.length > 0 ? 
-        state.shipStats.command + 
-        state.deckCycle.hand.reduce((acc, card) => card.selected ? 
-        parseInt(card.actCom) + acc : 0 + acc, 0) :
-        state.shipStats.command,
-      power: state.shipStats.power + 
-        state.systems.reduce((acc, sys) => sys.selected ? 
-        -1 + acc : 0 + acc, 0),
-      hd:[1,1],
-      targeting: (state.deckCycle.hand.reduce((acc, card) => 
-      card.selected ? parseInt(card.targeting) + acc : 0 + acc, 0)) + 
-      (state.systems[1].selected ? state.systems[1].pow : 0),
-      evasion: (state.deckCycle.hand.reduce((acc, card) => 
-      card.selected ? parseInt(card.evasion) + acc : 0 + acc, 0)) + 
-      (state.systems[2].selected ? state.systems[2].pow : 0),
-      shield: state.systems[0].selected ? state.systems[0].pow : 0,
-      shieldPen:0,
-      initiative: (state.systems[3].selected ? state.systems[3].pow : 0),
-      armor:1,
-    });    
+    dispatch({type:'setCombatStats'});
   }, [state.deckCycle, state.systems, state.shipStats]);
 
   // Setup draw button
   useEffect(() => {
-    if (firstDraw) {
-      setPlayTootip("Draw Cards!");
-    } else if (combatStats.power < 0) {
-      setPlayTootip("Insufficient Power!");
-    } else if (combatStats.command < 0) {
-      setPlayTootip("Insufficient Command!");      
-    } else if (combatStats.support < 0) {
-      setPlayTootip("Insufficient Support!");      
+    dispatch({type:'setLegal'});
+    if (state.combatStats.power < 0) {
+      dispatch({type:'setPlayTooltip', text:'Insufficient Power!'});
+    } else if (state.combatStats.command < 0) {
+      dispatch({type:'setPlayTooltip', text:'Insufficient Command!'});
+    } else if (state.combatStats.support < 0) {
+      dispatch({type:'setPlayTooltip', text:'Insufficient Support!'});
     } else {
-      setPlayTootip("Play Cards!");      
+      dispatch({type:'setPlayTooltip', text:'Draw Cards!'});
     }
-    dispatch({
-      type:'setLegal', 
-      power:combatStats.power, 
-      command:combatStats.command, 
-      support:combatStats.support
-    });
-  }, [combatStats, firstDraw]);
+  }, [state.combatStats, state.firstDraw]);
 
   // jsx
   return (
@@ -216,16 +219,16 @@ function App() {
         draw={state.deckCycle.draw.length}
         discard={state.deckCycle.discard.length}
         // discard={0}
-        curPower={combatStats.power}
-        curCommand={combatStats.command}
-        curSupport={combatStats.support}
-        health={combatStats.armor}
+        curPower={state.combatStats.power}
+        curCommand={state.combatStats.command}
+        curSupport={state.combatStats.support}
+        health={state.combatStats.armor}
       />
       <main style={{marginTop:"80px"}}>
         <div style={{display:"flex", alignItems:"center"}}>
         <Stats 
           title="Player"
-          stats={combatStats}
+          stats={state.combatStats}
           hitChance={playerHitChance}
         />
         <CombatSymbol fadeProp={fadeProp}/>
@@ -293,19 +296,20 @@ function App() {
             color:"black", 
             cursor:"pointer", 
           }} className="button" onClick={() => {
-              combatAnimation(combatStats, enemyStats, setCombatResults, setFadeProp);
+              combatAnimation(state.combatStats, enemyStats, setCombatResults, setFadeProp);
             }
           }>
               Roll
           </button>
           <PlayButton
-            playTooltip={playTooltip}
+            playTooltip={state.playTooltip}
             clickPlay={() => {
-              setFirstDraw(false);
+              // setFirstDraw(false);
+              dispatch({type:'setFirstDraw'});
               drawCards(HANDSIZE, state.deckCycle, dispatch, 'setDeckCycleDraw', state.legal);
             }}
             legal={state.legal}
-            firstDraw={firstDraw}
+            firstDraw={state.firstDraw}
           />  
         </div>
       </div>
