@@ -9,7 +9,7 @@ import basedeck from '../data/data';
 import enemies from '../data/enemies';
 
 // utilties
-import { shuffleDeck, handleClick, clickHand, drawCards } from '../libs/utilities';
+import { shuffleDeck, handleClick, drawCards } from '../libs/utilities';
 import { calcCombat, combatAnimation } from '../libs/combat';
 
 // Components
@@ -46,6 +46,8 @@ const initState = {
     {id:3, name:'Engine', img:'foot.png', pow:1, selected:false}, 
     {id:4, name:'Navigation', img:'nav.png', pow:1, selected:false},
   ],
+  shipStats: {},
+  legal: true,
 };
 
 const reducer = (state, action) => {
@@ -78,8 +80,24 @@ const reducer = (state, action) => {
           return elem.id === action.id && elem.type !== 'system' && elem.pow !== 0 ?
             {...elem, selected:!elem.selected} :
             elem
-          })
-      }
+        }),
+    };
+    case 'setShipStats':
+      // console.log(state.deckComplete.reduce((acc, card) => acc + parseInt(card.power), 0))
+      return {
+        ...state,
+        shipStats: {
+          power: state.deckComplete.reduce((acc, card) => acc + parseInt(card.power), 0),
+          command: state.deckComplete.reduce((acc, card) => acc + parseInt(card.command), 0),
+          support: state.deckComplete.reduce((acc, card) => acc + parseInt(card.support), 0),
+          health: state.deckComplete.reduce((acc, card) => acc + parseInt(card.armor), 0),
+        },
+    };
+    case 'setLegal':
+      return {...state, legal:action.power >= 0 && action.command >= 0 && action.support >= 0}
+        // stats.combatStats.power >= 0 && 
+        // stats.combatStats.command >= 0 &&
+        // stats.combatStats.support >= 0
     default:
       return state;
   }
@@ -89,20 +107,12 @@ function App() {
   const HANDSIZE = 5;  
 
   const [state, dispatch] = useReducer(reducer, initState);
-  // console.log(state)
-
+  console.log(state.shipStats)
+  
   /*
     DEFINE STATE
   */
-  // const [systems, setSystems] = useState([
-  //   {id:0, name:'Shields', img:'g13879.png', pow:1, selected:false}, 
-  //   {id:1, name:'Scanners', img:'sensors.png', pow:1, selected:false}, 
-  //   {id:2, name:'ECM', img:'ecm.png', pow:1, selected:false}, 
-  //   {id:3, name:'Engine', img:'foot.png', pow:1, selected:false}, 
-  //   {id:4, name:'Navigation', img:'nav.png', pow:1, selected:false},
-  // ]);
-  const [shipStats, setShipStats] = useState({});
-  const [legal, setLegal] = useState(true);
+  // const [legal, setLegal] = useState(true);
   const [firstDraw, setFirstDraw] = useState(true);
   const [playTooltip, setPlayTootip] = useState("");
   const [combatStats, setCombatStats] = useState({});
@@ -130,19 +140,15 @@ function App() {
   });
   const [abilityMenu] = useState(true);
   /*
-    END DEFINE STATE
+  END DEFINE STATE
   */
-
-  // console.log("render");
-
+ 
+ // console.log("render");
+ console.log(combatStats)
+ 
   // Set max stats when deck changes
   useEffect(() => {
-    setShipStats({
-      power: state.deckComplete.reduce((acc, card) => acc + parseInt(card.power), 0),
-      command: state.deckComplete.reduce((acc, card) => acc + parseInt(card.command), 0),
-      support: state.deckComplete.reduce((acc, card) => acc + parseInt(card.support), 0),
-      health: state.deckComplete.reduce((acc, card) => acc + parseInt(card.health), 0),
-    });
+    dispatch({type:'setShipStats'});
   }, [state.deckComplete, allEnemies]);
 
   // Initialize hit chances
@@ -155,20 +161,18 @@ function App() {
   useEffect(() => {
     setCombatStats({
       support: state.deckCycle.hand.length > 0 ? 
-        shipStats.support + 
+        state.shipStats.support + 
         state.deckCycle.hand.reduce((acc, card) => card.selected ? 
         parseInt(card.actSup) + acc : 0 + acc, 0) : 
-        0,
+        state.shipStats.support,
       command: state.deckCycle.hand.length > 0 ? 
-        shipStats.command + 
+        state.shipStats.command + 
         state.deckCycle.hand.reduce((acc, card) => card.selected ? 
         parseInt(card.actCom) + acc : 0 + acc, 0) :
-        0,
-      power: state.deckCycle.hand.length > 0 ? 
-        shipStats.power + 
+        state.shipStats.command,
+      power: state.shipStats.power + 
         state.systems.reduce((acc, sys) => sys.selected ? 
-        -1 + acc : 0 + acc, 0) : 
-        0,
+        -1 + acc : 0 + acc, 0),
       hd:[1,1],
       targeting: (state.deckCycle.hand.reduce((acc, card) => 
       card.selected ? parseInt(card.targeting) + acc : 0 + acc, 0)) + 
@@ -181,7 +185,7 @@ function App() {
       initiative: (state.systems[3].selected ? state.systems[3].pow : 0),
       armor:1,
     });    
-  }, [state.deckCycle, state.systems, shipStats]);
+  }, [state.deckCycle, state.systems, state.shipStats]);
 
   // Setup draw button
   useEffect(() => {
@@ -196,11 +200,12 @@ function App() {
     } else {
       setPlayTootip("Play Cards!");      
     }
-    setLegal(
-      combatStats.power >= 0 && 
-      combatStats.command >= 0 &&
-      combatStats.support >= 0
-    );
+    dispatch({
+      type:'setLegal', 
+      power:combatStats.power, 
+      command:combatStats.command, 
+      support:combatStats.support
+    });
   }, [combatStats, firstDraw]);
 
   // jsx
@@ -297,9 +302,9 @@ function App() {
             playTooltip={playTooltip}
             clickPlay={() => {
               setFirstDraw(false);
-              drawCards(HANDSIZE, state.deckCycle, dispatch, 'setDeckCycleDraw', legal);
+              drawCards(HANDSIZE, state.deckCycle, dispatch, 'setDeckCycleDraw', state.legal);
             }}
-            legal={legal}
+            legal={state.legal}
             firstDraw={firstDraw}
           />  
         </div>
