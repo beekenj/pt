@@ -22,6 +22,22 @@ import SystemIcon from './SystemIcon';
 import Stats from './Stats';
 import CombatSymbol from './CombatSymbol';
 
+const allEnemies = enemies.map(enemy => {
+  return {
+    ...enemy,
+    id: +enemy.id,
+    difficulty: +enemy.difficulty,
+    targeting: +enemy.targeting,
+    evasion: +enemy.evasion,
+    shield: +enemy.shield,
+    shieldPen: +enemy.shieldPen,
+    initiative: +enemy.initiative,
+    armor: +enemy.armor,
+    name: enemy.name,
+    hd: enemy.hd.split(",").map(elem => +elem),
+  }
+});
+
 const initState = {
   deckComplete: basedeck.map(card => {
     return {
@@ -51,21 +67,24 @@ const initState = {
   firstDraw: true,
   playTooltip: "",
   combatStats: {},
-  allEnemies: enemies.map(enemy => {
-    return {
-      ...enemy,
-      id: +enemy.id,
-      difficulty: +enemy.difficulty,
-      targeting: +enemy.targeting,
-      evasion: +enemy.evasion,
-      shield: +enemy.shield,
-      shieldPen: +enemy.shieldPen,
-      initiative: +enemy.initiative,
-      armor: +enemy.armor,
-      name: enemy.name,
-      hd: enemy.hd.split(",").map(elem => +elem),
-    }
-  }),
+  // allEnemies: enemies.map(enemy => {
+  //   return {
+  //     ...enemy,
+  //     id: +enemy.id,
+  //     difficulty: +enemy.difficulty,
+  //     targeting: +enemy.targeting,
+  //     evasion: +enemy.evasion,
+  //     shield: +enemy.shield,
+  //     shieldPen: +enemy.shieldPen,
+  //     initiative: +enemy.initiative,
+  //     armor: +enemy.armor,
+  //     name: enemy.name,
+  //     hd: enemy.hd.split(",").map(elem => +elem),
+  //   }
+  // }),
+  enemyStats: allEnemies[Math.floor(Math.random()*allEnemies.length)],
+  playerHitChance: 0,
+  another:"DSAFSDAFASDFAF"
 };
 
 const reducer = (state, action) => {
@@ -117,7 +136,7 @@ const reducer = (state, action) => {
         legal: state.combatStats.power >= 0 && 
               state.combatStats.command >= 0 && 
               state.combatStats.support >= 0,
-      }
+    };
     case 'setFirstDraw':
       return {...state, firstDraw: false};
     case 'setPlayTooltip':
@@ -151,7 +170,9 @@ const reducer = (state, action) => {
           initiative: (state.systems[3].selected ? state.systems[3].pow : 0),
           armor:1,
         }
-      }
+    };
+    // case 'setPlayerHitChance':
+    //   return {...state, playerHitChance:calcCombat(state.combatStats, enemyStats)};
     default:
       return state;
   }
@@ -161,12 +182,29 @@ function App() {
   const HANDSIZE = 5;  
 
   const [state, dispatch] = useReducer(reducer, initState);
-  console.log(state.shipStats)
+  console.log(state)
+  // console.log(initState)
   
   /*
     DEFINE STATE
   */
-  const [enemyStats] = useState(state.allEnemies[Math.floor(Math.random()*state.allEnemies.length)]);
+  // const [combatStats, setCombatStats] = useState({});
+  // const [allEnemies] = useState(enemies.map(enemy => {
+  //   return {
+  //     ...enemy,
+  //     id: +enemy.id,
+  //     difficulty: +enemy.difficulty,
+  //     targeting: +enemy.targeting,
+  //     evasion: +enemy.evasion,
+  //     shield: +enemy.shield,
+  //     shieldPen: +enemy.shieldPen,
+  //     initiative: +enemy.initiative,
+  //     armor: +enemy.armor,
+  //     name: enemy.name,
+  //     hd: enemy.hd.split(",").map(elem => +elem),
+  //   }
+  // }));
+  // const [enemyStats] = useState(allEnemies[Math.floor(Math.random()*allEnemies.length)]);
   const [playerHitChance, setPlayerHitChance] = useState(0);
   const [enemyHitChance, setEnemyHitChance] = useState(0);
   const [combatResults, setCombatResults] = useState("");
@@ -184,13 +222,13 @@ function App() {
   // Set max stats when deck changes
   useEffect(() => {
     dispatch({type:'setShipStats'});
-  }, [state.deckComplete, state.allEnemies]);
+  }, [state.deckComplete, allEnemies]);
 
   // Initialize hit chances
   useEffect(() => {
-    setPlayerHitChance(calcCombat(state.combatStats, enemyStats));
-    setEnemyHitChance(calcCombat(enemyStats, state.combatStats));
-  }, [state.combatStats, enemyStats]);
+    setPlayerHitChance(calcCombat(state.combatStats, state.enemyStats));
+    setEnemyHitChance(calcCombat(state.enemyStats, state.combatStats));
+  }, [state.combatStats, state.enemyStats]);
 
   // Set all stats
   useEffect(() => {
@@ -233,8 +271,8 @@ function App() {
         />
         <CombatSymbol fadeProp={fadeProp}/>
         <Stats 
-          title={enemyStats.name}
-          stats={enemyStats}
+          title={state.enemyStats.name}
+          stats={state.enemyStats}
           hitChance={enemyHitChance}
         />
         </div>
@@ -296,7 +334,7 @@ function App() {
             color:"black", 
             cursor:"pointer", 
           }} className="button" onClick={() => {
-              combatAnimation(state.combatStats, enemyStats, setCombatResults, setFadeProp);
+              combatAnimation(state.combatStats, state.enemyStats, setCombatResults, setFadeProp);
             }
           }>
               Roll
