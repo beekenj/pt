@@ -6,6 +6,7 @@ import 'tippy.js/dist/tippy.css';
 
 // data
 import basedeck from '../data/data';
+import enemies from '../data/enemies';
 
 // utilties
 import { shuffleDeck, handleClick, clickHand, drawCards } from '../libs/utilities';
@@ -27,12 +28,17 @@ function App() {
   /*
     DEFINE STATE
   */
-  const [deck] = useState(basedeck.map(card => {
+  const [deckComplete] = useState(basedeck.map(card => {
     return {
       ...card,
       selected:false, 
     }
   }));
+  const [deckCycle, setDeckCycle] = useState({
+    draw:deckComplete,
+    hand:[],
+    discard:[],
+  });
   const [systems, setSystems] = useState([
     {id:0, name:'Shields', img:'g13879.png', pow:1, selected:false}, 
     {id:1, name:'Scanners', img:'sensors.png', pow:1, selected:false}, 
@@ -40,25 +46,27 @@ function App() {
     {id:3, name:'Engine', img:'foot.png', pow:1, selected:false}, 
     {id:4, name:'Navigation', img:'nav.png', pow:1, selected:false},
   ]);
-  const [deckCycle, setDeckCycle] = useState({
-    draw:deck,
-    hand:[],
-    discard:[],
-  })
   const [shipStats, setShipStats] = useState({});
   const [legal, setLegal] = useState(true);
   const [firstDraw, setFirstDraw] = useState(true);
   const [playTooltip, setPlayTootip] = useState("");
   const [combatStats, setCombatStats] = useState({});
-  const [dummyStats] = useState({
-    hd:[1,1],
-    targeting:0,
-    evasion:0,
-    shield:1,
-    shieldPen:0,
-    initiative:0,
-    armor:1,
-  });
+  const [allEnemies] = useState(enemies.map(enemy => {
+    return {
+      ...enemy,
+      id: +enemy.id,
+      difficulty: +enemy.difficulty,
+      targeting: +enemy.targeting,
+      evasion: +enemy.evasion,
+      shield: +enemy.shield,
+      shieldPen: +enemy.shieldPen,
+      initiative: +enemy.initiative,
+      armor: +enemy.armor,
+      name: enemy.name,
+      hd: enemy.hd.split(",").map(elem => +elem),
+    }
+  }));
+  const [enemyStats] = useState(allEnemies[Math.floor(Math.random()*allEnemies.length)]);
   const [playerHitChance, setPlayerHitChance] = useState(0);
   const [enemyHitChance, setEnemyHitChance] = useState(0);
   const [combatResults, setCombatResults] = useState("");
@@ -86,51 +94,50 @@ function App() {
   // Set max stats when deck changes
   useEffect(() => {
     setShipStats({
-      power: deck.reduce((acc, card) => acc + parseInt(card.power), 0),
-      command: deck.reduce((acc, card) => acc + parseInt(card.command), 0),
-      support: deck.reduce((acc, card) => acc + parseInt(card.support), 0),
-      health: deck.reduce((acc, card) => acc + parseInt(card.health), 0),
+      power: deckComplete.reduce((acc, card) => acc + parseInt(card.power), 0),
+      command: deckComplete.reduce((acc, card) => acc + parseInt(card.command), 0),
+      support: deckComplete.reduce((acc, card) => acc + parseInt(card.support), 0),
+      health: deckComplete.reduce((acc, card) => acc + parseInt(card.health), 0),
     });
-  }, [deck]);
+  }, [deckComplete, allEnemies]);
 
   // Initialize hit chances
   useEffect(() => {
-    setPlayerHitChance(calcCombat(combatStats, dummyStats));
-    setEnemyHitChance(calcCombat(dummyStats, combatStats));
-  }, [combatStats, dummyStats]);
+    setPlayerHitChance(calcCombat(combatStats, enemyStats));
+    setEnemyHitChance(calcCombat(enemyStats, combatStats));
+  }, [combatStats, enemyStats]);
 
   // Set all stats
   useEffect(() => {
     setCombatStats({
-        support: deckCycle.hand.length > 0 ? 
-          shipStats.support + 
-          deckCycle.hand.reduce((acc, card) => card.selected ? 
-          parseInt(card.actSup) + acc : 0 + acc, 0) : 
-          0,
-        command: deckCycle.hand.length > 0 ? 
-          shipStats.command + 
-          deckCycle.hand.reduce((acc, card) => card.selected ? 
-          parseInt(card.actCom) + acc : 0 + acc, 0) :
-          0,
-        power: deckCycle.hand.length > 0 ? 
-          shipStats.power + 
-          systems.reduce((acc, sys) => sys.selected ? 
-          -1 + acc : 0 + acc, 0) : 
-          0,
-        hd:[1,1],
-        targeting: (deckCycle.hand.reduce((acc, card) => 
-        card.selected ? parseInt(card.targeting) + acc : 0 + acc, 0)) + 
-        (systems[1].selected ? systems[1].pow : 0),
-        evasion: (deckCycle.hand.reduce((acc, card) => 
-        card.selected ? parseInt(card.evasion) + acc : 0 + acc, 0)) + 
-        (systems[2].selected ? systems[2].pow : 0),
-        shield: systems[0].selected ? systems[0].pow : 0,
-        shieldPen:0,
-        initiative: (systems[3].selected ? systems[3].pow : 0),
-        armor:1,
-    });
-    
-  }, [deckCycle, systems, shipStats, dummyStats, playerHitChance]);
+      support: deckCycle.hand.length > 0 ? 
+        shipStats.support + 
+        deckCycle.hand.reduce((acc, card) => card.selected ? 
+        parseInt(card.actSup) + acc : 0 + acc, 0) : 
+        0,
+      command: deckCycle.hand.length > 0 ? 
+        shipStats.command + 
+        deckCycle.hand.reduce((acc, card) => card.selected ? 
+        parseInt(card.actCom) + acc : 0 + acc, 0) :
+        0,
+      power: deckCycle.hand.length > 0 ? 
+        shipStats.power + 
+        systems.reduce((acc, sys) => sys.selected ? 
+        -1 + acc : 0 + acc, 0) : 
+        0,
+      hd:[1,1],
+      targeting: (deckCycle.hand.reduce((acc, card) => 
+      card.selected ? parseInt(card.targeting) + acc : 0 + acc, 0)) + 
+      (systems[1].selected ? systems[1].pow : 0),
+      evasion: (deckCycle.hand.reduce((acc, card) => 
+      card.selected ? parseInt(card.evasion) + acc : 0 + acc, 0)) + 
+      (systems[2].selected ? systems[2].pow : 0),
+      shield: systems[0].selected ? systems[0].pow : 0,
+      shieldPen:0,
+      initiative: (systems[3].selected ? systems[3].pow : 0),
+      armor:1,
+    });    
+  }, [deckCycle, systems, shipStats]);
 
   // Setup draw button
   useEffect(() => {
@@ -161,7 +168,7 @@ function App() {
         curPower={combatStats.power}
         curCommand={combatStats.command}
         curSupport={combatStats.support}
-        health={shipStats.health}
+        health={combatStats.armor}
       />
       <main style={{marginTop:"80px"}}>
         <div style={{display:"flex", alignItems:"center"}}>
@@ -172,8 +179,8 @@ function App() {
         />
         <CombatSymbol fadeProp={fadeProp}/>
         <Stats 
-          title="Enemy"
-          stats={dummyStats}
+          title={enemyStats.name}
+          stats={enemyStats}
           hitChance={enemyHitChance}
         />
         </div>
@@ -235,7 +242,7 @@ function App() {
             color:"black", 
             cursor:"pointer", 
           }} className="button" onClick={() => {
-              combatAnimation(combatStats, dummyStats, setCombatResults, setFadeProp);
+              combatAnimation(combatStats, enemyStats, setCombatResults, setFadeProp);
             }
           }>
               Roll

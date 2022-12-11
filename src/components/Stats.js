@@ -16,6 +16,9 @@ export default function Stats(props) {
                 Shields: {stats.shield}
             </div>
             <div>
+                ShieldPen: {stats.shieldPen}
+            </div>
+            <div>
                 Initiative: {stats.initiative}
             </div>
             <div>

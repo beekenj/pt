@@ -13,7 +13,7 @@ export default function Nav(props) {
                 Support: {props.curSupport}
             </div>
             <div>
-                Health: {props.health}
+                Armor: {props.health}
             </div>
             <div>
                 Draw/Discard: {props.draw}/{props.discard}

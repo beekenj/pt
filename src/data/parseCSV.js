@@ -1,8 +1,13 @@
 const fs = require("fs");
 const { parse } = require("csv-parse");
 
+if (process.argv.slice(2)[0] === '-h') {
+  console.log("node parseCSV [sourceFile.csv] [destinationFile.js]");
+  process.exit(0);
+}
+
 if (process.argv.slice(2).length < 2) {
-  console.log('Please include a source file and a destination file in the command line args');
+  console.log('Please include a source file and a destination file in the command line args. -h for help');
   process.exit(1);
 }
 

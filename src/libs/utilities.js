@@ -105,16 +105,14 @@ const drawCards = (n, deckCycle, setDeckCycle, legal) => {
     inHand = inDraw.slice(0, n);
     // remove hand from draw
     inDraw = inDraw.slice(n-inDraw.length);
-  }
-  // setDraw(inDraw);
-  // setHand(inHand);
-  // setDiscard(inDiscard);
+  };
+
   setDeckCycle({
     draw:inDraw,
     hand:inHand,
     discard:inDiscard,
   });
-  // console.log(inDraw, inHand, inDiscard);
+  // console.log("1,1".split(",").map(elem => +elem));
 };
 
 export {shuffleDeck, handleClick, clickHand, drawCards};
