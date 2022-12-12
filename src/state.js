@@ -46,6 +46,11 @@ const allEnemies = enemies.map(enemy => {
       {id:3, name:'Engine', img:'foot.png', pow:1, selected:false}, 
       {id:4, name:'Navigation', img:'nav.png', pow:1, selected:false},
     ],
+    actions: [
+      {id:0, name:'Backward1', img:'backward1.png', pow:1, selected:false}, 
+      {id:1, name:'Attack', img:'combat.png', pow:1, selected:false}, 
+      {id:2, name:'Forward1', img:'forward1.png', pow:1, selected:false}, 
+    ],
     shipStats: {},
     legal: true,
     firstDraw: true,
@@ -56,7 +61,7 @@ const allEnemies = enemies.map(enemy => {
     enemyHitChance: 0,
     combatResults: "",
     fadeProp: {fade:'fade-out'},
-    abilityMenu: true,
+    actionMenu: false,
 };
   
 
@@ -81,7 +86,8 @@ switch (action.type) {
             {...elem, selected:!elem.selected} :
             elem
         }),            
-        }
+        },
+        actionMenu: true,
     };
     case 'setSystems':
     return {
@@ -91,6 +97,22 @@ switch (action.type) {
             {...elem, selected:!elem.selected} :
             elem
         }),
+    };
+    case 'setActions':
+    return {
+        ...state,
+        actions: state.actions.map(elem => {
+        return elem.id === action.id ?
+            {...elem, selected:true} :
+            {...elem, selected:false}
+        }),
+        actionMenu: false,
+        deckCycle: {
+          ...state.deckCycle,
+          hand: state.deckCycle.hand.map(elem => {
+              return {...elem, selected:false}
+          }),            
+        },
     };
     case 'setShipStats':
     return {

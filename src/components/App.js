@@ -101,14 +101,14 @@ function App() {
         right:"0",
         left:"0",
       }}>   
-      {state.abilityMenu && <Systems>
-            {state.systems.map((sys, idx) => 
+      {state.actionMenu && <Systems>
+            {state.actions.map((sys, idx) => 
               <div key={idx}>
                   <SystemIcon 
                     name={sys.name} 
                     img={sys.img} 
                     selected={sys.selected} 
-                    handleClick={() => handleClick(sys.id, dispatch, 'setSystems')}
+                    handleClick={() => handleClick(sys.id, dispatch, 'setActions')}
                   />
               </div>
             )}
